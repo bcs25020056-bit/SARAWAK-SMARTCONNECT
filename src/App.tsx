@@ -6,7 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Notifications from './pages/Notifications';
 import JobSearch from './pages/JobSearch';
 import Profile from './pages/Profile';
-import Courses from './pages/Courses';
+import Scholarships from './pages/Scholarships';
 import Mentorship from './pages/Mentorship';
 import Achievements from './pages/Achievements';
 import Onboarding from './pages/Onboarding';
@@ -54,7 +54,7 @@ export default function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="notifications" element={<Notifications />} />
             <Route path="job-search" element={<JobSearch />} />
-            <Route path="courses" element={<Courses />} />
+            <Route path="scholarships" element={<Scholarships />} />
             <Route path="mentorship" element={<Mentorship />} />
             <Route path="profile" element={<Profile />} />
             <Route path="achievements" element={<Achievements />} />

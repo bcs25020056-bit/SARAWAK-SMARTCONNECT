@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Terminal, CircleDollarSign, Brain, Megaphone, Star, Rocket, Palette, BarChart3, ChevronLeft, ChevronRight, Plus, Loader2, Building2, Briefcase } from 'lucide-react';
+import { Terminal, CircleDollarSign, Brain, Megaphone, Star, Rocket, Palette, BarChart3, ChevronLeft, ChevronRight, Plus, Loader2, Building2, Briefcase, Landmark, GraduationCap, Award, Users } from 'lucide-react';
 import { collection, query, limit, onSnapshot, orderBy, where } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useFirebase } from '../contexts/FirebaseContext';
@@ -45,10 +45,10 @@ const Dashboard = () => {
     };
   }, [user]);
 
-  const courses = [
-    { title: 'Intro to UX Design', icon: Terminal, color: 'bg-primary-container', classmates: 12, desc: 'Learn the basics of user-centered design in a fun, hands-on environment.' },
-    { title: 'Financial Literacy', icon: CircleDollarSign, color: 'bg-secondary-container', classmates: 45, desc: "Mastering your money doesn't have to be boring! Let's make finance fun." },
-    { title: 'Critical Thinking', icon: Brain, color: 'bg-tertiary-container', classmates: 8, desc: 'Develop the mental tools needed to solve complex puzzles and problems.' },
+  const scholarships = [
+    { title: 'PTPTN Loan', icon: Landmark, color: 'bg-primary-container', applicants: 1240, desc: 'National higher education fund for Malaysian students.' },
+    { title: 'Yayasan Sarawak', icon: GraduationCap, color: 'bg-secondary-container', applicants: 850, desc: 'Special scholarships and loans for Sarawakian students.' },
+    { title: 'Petronas Scholarship', icon: Award, color: 'bg-tertiary-container', applicants: 3200, desc: 'Full scholarship for high-achieving students in STEM fields.' },
   ];
 
   if (authLoading || loading) {
@@ -191,35 +191,29 @@ const Dashboard = () => {
         </motion.div>
       </section>
 
-      {/* Courses Section */}
+      {/* Scholarships Section */}
       <section className="mb-16">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-4xl font-black font-headline text-on-surface">My Courses</h2>
-          <Link to="/courses" className="px-6 py-2 bg-white text-primary font-bold rounded-full inked-border hover:bg-surface-container transition-colors">View All</Link>
+          <h2 className="text-4xl font-black font-headline text-on-surface">Available Scholarships</h2>
+          <Link to="/scholarships" className="px-6 py-2 bg-white text-primary font-bold rounded-full inked-border hover:bg-surface-container transition-colors">View All</Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {courses.map((course, i) => (
+          {scholarships.map((scholarship, i) => (
             <motion.div 
-              key={course.title}
+              key={scholarship.title}
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.1 * i }}
               className="bg-white rounded-3xl inked-border p-8 hover:-translate-y-2 transition-transform cursor-pointer group"
             >
-              <div className={cn("w-20 h-20 rounded-2xl inked-border mb-6 flex items-center justify-center group-hover:rotate-6 transition-transform", course.color)}>
-                <course.icon size={40} className="text-on-surface" />
+              <div className={cn("w-20 h-20 rounded-2xl inked-border mb-6 flex items-center justify-center group-hover:rotate-6 transition-transform", scholarship.color)}>
+                <scholarship.icon size={40} className="text-on-surface" />
               </div>
-              <h3 className="font-headline font-extrabold text-2xl mb-3">{course.title}</h3>
-              <p className="text-on-surface-variant mb-6 font-medium">{course.desc}</p>
+              <h3 className="font-headline font-extrabold text-2xl mb-3">{scholarship.title}</h3>
+              <p className="text-on-surface-variant mb-6 font-medium">{scholarship.desc}</p>
               <div className="flex items-center gap-2">
-                <div className="flex -space-x-3">
-                  {[1, 2].map(n => (
-                    <div key={n} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
-                      <img src={`https://i.pravatar.cc/100?img=${n + 10}`} alt="student" referrerPolicy="no-referrer" />
-                    </div>
-                  ))}
-                </div>
-                <span className="text-xs font-bold text-slate-400">+{course.classmates} classmates</span>
+                <Users size={16} className="text-slate-400" />
+                <span className="text-xs font-bold text-slate-400">{scholarship.applicants} applicants</span>
               </div>
             </motion.div>
           ))}

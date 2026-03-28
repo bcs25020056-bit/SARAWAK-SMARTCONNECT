@@ -17,13 +17,17 @@ import {
   X,
   Building2,
   Globe,
-  Briefcase
+  Briefcase,
+  LogOut
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useFirebase } from '../contexts/FirebaseContext';
+import { logout } from '../firebase';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
   const { user, profile, updateProfile } = useFirebase();
+  const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     displayName: '',
@@ -94,6 +98,15 @@ const Profile = () => {
 
   const removeEducation = (index: number) => {
     setFormData({ ...formData, education: formData.education.filter((_, i) => i !== index) });
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   if (!profile) {
@@ -169,6 +182,13 @@ const Profile = () => {
               <Calendar size={18} className="text-primary" />
               Joined {profile.createdAt ? new Date(profile.createdAt.seconds * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Jan 2024'}
             </div>
+            <button 
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-white px-4 py-2 rounded-full inked-border font-bold text-sm text-error hover:bg-error hover:text-white transition-all inked-shadow-sm group"
+            >
+              <LogOut size={18} className="group-hover:translate-x-1 transition-transform" />
+              Log Out
+            </button>
           </div>
         </div>
       </motion.section>

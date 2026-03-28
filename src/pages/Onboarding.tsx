@@ -103,7 +103,7 @@ const Onboarding = () => {
             "font-medium leading-relaxed",
             role === 'student' ? "text-on-primary/80" : "text-on-surface-variant"
           )}>
-            I'm looking for internships, jobs, and courses to boost my career.
+            I'm looking for internships, jobs, and scholarships to boost my career.
           </p>
         </button>
 
@@ -384,7 +384,7 @@ const Onboarding = () => {
   const getStepSubtitle = () => {
     if (step === 0) return "Are you here to grow your career or grow your team?";
     if (role === 'student') {
-      return step === 1 ? "This helps us recommend the best courses and jobs for you." : "List your skills so mentors and employers can find you.";
+      return step === 1 ? "This helps us recommend the best scholarships and jobs for you." : "List your skills so mentors and employers can find you.";
     } else {
       return "Help talent find you by providing some basic details about your organization.";
     }

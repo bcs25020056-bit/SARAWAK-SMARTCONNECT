@@ -52,7 +52,7 @@ const Notifications = () => {
           {
             userId: user.uid,
             title: 'Welcome to Smart Connect!',
-            message: 'Your journey to empower Sarawak starts here. Explore jobs, courses, and more!',
+            message: 'Your journey to empower Sarawak starts here. Explore jobs, scholarships, and more!',
             type: 'success',
             read: false,
             createdAt: serverTimestamp()

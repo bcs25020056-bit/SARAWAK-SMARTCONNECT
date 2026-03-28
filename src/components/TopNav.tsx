@@ -10,7 +10,7 @@ const TopNav = () => {
   
   const navLinks = [
     { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Courses', path: '/courses' },
+    { name: 'Scholarships', path: '/scholarships' },
     { name: 'Job Search', path: '/job-search' },
   ];
 
