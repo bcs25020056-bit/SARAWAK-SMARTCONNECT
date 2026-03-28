@@ -10,13 +10,14 @@ interface Job {
   id: string;
   title: string;
   company: string;
-  tags: string[];
-  desc: string;
+  tags?: string[];
+  description: string;
   icon: string;
   featured?: boolean;
   internship?: boolean;
   salary?: string;
   location?: string;
+  type?: string;
 }
 
 interface Application {
@@ -30,7 +31,7 @@ interface Application {
 }
 
 const JobSearch = () => {
-  const { user } = useFirebase();
+  const { user, profile } = useFirebase();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,62 +42,22 @@ const JobSearch = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const jobsCol = collection(db, 'jobs');
-        const jobsSnapshot = await getDocs(jobsCol);
-        
-        if (jobsSnapshot.empty) {
-          // Seed initial jobs if empty
-          const initialJobs = [
-            {
-              title: 'Senior Frontend Dev',
-              company: 'TechSarawak Hub',
-              tags: ['Full-time', 'Remote friendly'],
-              desc: 'Join our vibrant team building the next generation of digital services for the people of Sarawak. Modern stack: React, Tailwind, and Node.',
-              icon: 'Terminal',
-              featured: true,
-              salary: 'RM 8k - 12k',
-              location: 'Kuching'
-            },
-            {
-              title: 'UI/UX Design Intern',
-              company: 'Creative Borneo',
-              tags: ['Hybrid'],
-              desc: 'Looking for a creative soul with a passion for bubbly interfaces and playful brand stories. Learn from the best designers in the region.',
-              icon: 'Brush',
-              internship: true,
-              salary: 'RM 1k - 1.5k',
-              location: 'Kuching'
-            },
-            {
-              title: 'Data Analyst',
-              company: 'Sarawak Energy',
-              tags: ['Full-time'],
-              desc: 'Help us power the future of Sarawak through data-driven insights. Experience with SQL and Python preferred.',
-              icon: 'Briefcase',
-              salary: 'RM 5k - 7k',
-              location: 'Kuching'
-            }
-          ];
-
-          for (const job of initialJobs) {
-            await addDoc(jobsCol, job);
-          }
-          
-          const newSnapshot = await getDocs(jobsCol);
-          setJobs(newSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job)));
-        } else {
-          setJobs(jobsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job)));
-        }
-      } catch (error) {
-        handleFirestoreError(error, OperationType.LIST, 'jobs');
-      } finally {
-        setLoading(false);
+    const jobsCol = collection(db, 'jobs');
+    const q = query(jobsCol, orderBy('postedAt', 'desc'));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (snapshot.empty) {
+        setJobs([]);
+      } else {
+        setJobs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job)));
       }
-    };
+      setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'jobs');
+      setLoading(false);
+    });
 
-    fetchJobs();
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -286,27 +247,32 @@ const JobSearch = () => {
                         <DollarSign size={12} /> {job.salary}
                       </span>
                     )}
-                    {job.tags.map(tag => (
+                    {job.type && (
+                      <span className="bg-surface-container-low px-3 py-1 rounded-full text-[10px] font-bold border-2 border-outline/30">{job.type}</span>
+                    )}
+                    {job.tags?.map(tag => (
                       <span key={tag} className="bg-surface-container-low px-3 py-1 rounded-full text-[10px] font-bold border-2 border-outline/30">{tag}</span>
                     ))}
                   </div>
 
                   <p className="text-sm line-clamp-2 text-on-surface-variant font-medium">
-                    {job.desc}
+                    {job.description}
                   </p>
 
                   <div className="mt-auto flex gap-4 pt-4 border-t-2 border-dashed border-outline/20">
-                    <button 
-                      onClick={() => handleApply(job)}
-                      disabled={hasApplied || applyingId === job.id}
-                      className={cn(
-                        "flex-1 rounded-full font-extrabold py-3 inked-border inked-shadow bubble-press flex items-center justify-center gap-2 transition-all",
-                        hasApplied ? "bg-surface-container-high text-outline cursor-not-allowed" : "bg-primary text-on-primary"
-                      )}
-                    >
-                      {applyingId === job.id ? <Loader2 className="animate-spin" size={20} /> : null}
-                      {hasApplied ? 'Applied' : 'Apply Now'}
-                    </button>
+                    {profile?.role !== 'company' && (
+                      <button 
+                        onClick={() => handleApply(job)}
+                        disabled={hasApplied || applyingId === job.id}
+                        className={cn(
+                          "flex-1 rounded-full font-extrabold py-3 inked-border inked-shadow bubble-press flex items-center justify-center gap-2 transition-all",
+                          hasApplied ? "bg-surface-container-high text-outline cursor-not-allowed" : "bg-primary text-on-primary"
+                        )}
+                      >
+                        {applyingId === job.id ? <Loader2 className="animate-spin" size={20} /> : null}
+                        {hasApplied ? 'Applied' : 'Apply Now'}
+                      </button>
+                    )}
                     <button className="w-12 h-12 rounded-full inked-border flex items-center justify-center hover:bg-surface-container transition-colors active:scale-95">
                       <Bookmark size={24} />
                     </button>

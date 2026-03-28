@@ -1,23 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Terminal, CircleDollarSign, Brain, Megaphone, Star, Rocket, Palette, BarChart3, ChevronLeft, ChevronRight, Plus, Loader2, Building2, Briefcase, Landmark, GraduationCap, Award, Users } from 'lucide-react';
-import { collection, query, limit, onSnapshot, orderBy, where } from 'firebase/firestore';
+import { collection, query, limit, onSnapshot, orderBy, where, deleteDoc, doc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useFirebase } from '../contexts/FirebaseContext';
 import { cn } from '../lib/utils';
 import { Link } from 'react-router-dom';
+import JobModal from '../components/JobModal';
 
 const Dashboard = () => {
   const { user, profile, loading: authLoading } = useFirebase();
   const [recommendedJobs, setRecommendedJobs] = useState<any[]>([]);
   const [recentAlerts, setRecentAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isJobModalOpen, setIsJobModalOpen] = useState(false);
+  const [jobToEdit, setJobToEdit] = useState<any>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !profile) return;
 
-    // Fetch recommended jobs (just latest 5 for now)
-    const jobsQuery = query(collection(db, 'jobs'), limit(5));
+    // Fetch jobs
+    let jobsQuery;
+    if (profile.role === 'company') {
+      // Companies see their own jobs
+      jobsQuery = query(
+        collection(db, 'jobs'), 
+        where('companyId', '==', user.uid),
+        orderBy('postedAt', 'desc')
+      );
+    } else {
+      // Students see recommended jobs
+      jobsQuery = query(collection(db, 'jobs'), limit(5));
+    }
+
     const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
       setRecommendedJobs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (error) => {
@@ -50,6 +65,27 @@ const Dashboard = () => {
     { title: 'Yayasan Sarawak', icon: GraduationCap, color: 'bg-secondary-container', applicants: 850, desc: 'Special scholarships and loans for Sarawakian students.' },
     { title: 'Petronas Scholarship', icon: Award, color: 'bg-tertiary-container', applicants: 3200, desc: 'Full scholarship for high-achieving students in STEM fields.' },
   ];
+
+  const handleDeleteJob = async (e: React.MouseEvent, jobId: string) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this job posting?')) return;
+    
+    try {
+      await deleteDoc(doc(db, 'jobs', jobId));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `jobs/${jobId}`);
+    }
+  };
+
+  const handleEditJob = (job: any) => {
+    setJobToEdit(job);
+    setIsJobModalOpen(true);
+  };
+
+  const handleCreateJob = () => {
+    setJobToEdit(null);
+    setIsJobModalOpen(true);
+  };
 
   if (authLoading || loading) {
     return (
@@ -106,7 +142,10 @@ const Dashboard = () => {
         <section className="mb-16">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-4xl font-black font-headline text-on-surface">Manage Postings</h2>
-            <button className="px-8 py-3 bg-secondary text-on-secondary font-black rounded-full inked-border inked-shadow flex items-center gap-2 hover:scale-105 transition-transform">
+            <button 
+              onClick={handleCreateJob}
+              className="px-8 py-3 bg-secondary text-on-secondary font-black rounded-full inked-border inked-shadow flex items-center gap-2 hover:scale-105 transition-transform"
+            >
               <Plus size={24} /> Post New Job
             </button>
           </div>
@@ -125,8 +164,15 @@ const Dashboard = () => {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.1 * i }}
-                  className="bg-white rounded-3xl inked-border p-8 hover:-translate-y-2 transition-transform cursor-pointer group"
+                  onClick={() => handleEditJob(job)}
+                  className="bg-white rounded-3xl inked-border p-8 hover:-translate-y-2 transition-transform cursor-pointer group relative"
                 >
+                  <button 
+                    onClick={(e) => handleDeleteJob(e, job.id)}
+                    className="absolute top-6 right-6 w-10 h-10 rounded-full bg-error/10 text-error flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-error hover:text-white"
+                  >
+                    <Plus size={20} className="rotate-45" />
+                  </button>
                   <div className="w-16 h-16 bg-secondary-container rounded-2xl inked-border mb-6 flex items-center justify-center text-3xl">
                     {job.icon || '💼'}
                   </div>
@@ -143,6 +189,12 @@ const Dashboard = () => {
             )}
           </div>
         </section>
+
+        <JobModal 
+          isOpen={isJobModalOpen} 
+          onClose={() => setIsJobModalOpen(false)} 
+          jobToEdit={jobToEdit} 
+        />
       </div>
     );
   }
