@@ -13,8 +13,15 @@ interface UserProfile {
   badges?: number;
   skills?: string[];
   education?: any[];
+  companyInfo?: {
+    name: string;
+    industry: string;
+    website: string;
+    location: string;
+    description: string;
+  };
   createdAt?: any;
-  role?: string;
+  role?: 'student' | 'company' | 'admin';
   onboarded?: boolean;
 }
 
@@ -55,7 +62,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               skills: [],
               education: [],
               createdAt: serverTimestamp(),
-              role: 'user',
+              role: 'student',
               onboarded: false
             };
             await setDoc(doc(db, 'users', firebaseUser.uid), initialProfile);

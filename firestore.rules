@@ -17,6 +17,8 @@ service cloud.firestore {
     //   - badges: number (optional)
     //   - skills: list (optional)
     //   - education: list (optional)
+    //   - companyInfo: map (optional)
+    //   - role: string (required, student|company|admin)
     //   - onboarded: bool (required)
     //   - createdAt: timestamp (required, immutable)
     //
@@ -25,6 +27,7 @@ service cloud.firestore {
     // Fields:
     //   - title: string (required)
     //   - company: string (required)
+    //   - companyId: string (required)
     //   - tags: list (optional)
     //   - desc: string (optional)
     //   - icon: string (optional)
@@ -32,6 +35,7 @@ service cloud.firestore {
     //   - internship: bool (optional)
     //   - salary: string (optional)
     //   - location: string (optional)
+    //   - postedAt: timestamp (required)
     //
     // Collection: applications
     // Document ID: {applicationId}
@@ -74,6 +78,11 @@ service cloud.firestore {
          (request.auth.token.email == "voonvanness288@gmail.com" && request.auth.token.email_verified == true));
     }
 
+    function isCompany() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'company';
+    }
+
     function isValidEmail(email) {
       return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     }
@@ -91,23 +100,26 @@ service cloud.firestore {
     // ===============================================================
 
     function isValidUser(data) {
-      return hasRequiredFields(['uid', 'email', 'displayName', 'onboarded']) &&
+      return hasRequiredFields(['uid', 'email', 'displayName', 'onboarded', 'role']) &&
              data.uid is string && data.uid.size() > 0 &&
              data.email is string && isValidEmail(data.email) &&
              data.displayName is string && data.displayName.size() < 100 &&
              data.onboarded is bool &&
+             data.role in ['student', 'company', 'admin'] &&
              (!('bio' in data) || (data.bio is string && data.bio.size() < 1000)) &&
              (!('level' in data) || data.level is number) &&
              (!('xp' in data) || data.xp is number) &&
              (!('badges' in data) || data.badges is number) &&
              (!('skills' in data) || data.skills is list) &&
-             (!('education' in data) || data.education is list);
+             (!('education' in data) || data.education is list) &&
+             (!('companyInfo' in data) || data.companyInfo is map);
     }
 
     function isValidJob(data) {
-      return hasRequiredFields(['title', 'company']) &&
+      return hasRequiredFields(['title', 'company', 'companyId']) &&
              data.title is string && data.title.size() < 200 &&
-             data.company is string && data.company.size() < 200;
+             data.company is string && data.company.size() < 200 &&
+             data.companyId is string;
     }
 
     function isValidApplication(data) {
@@ -139,7 +151,9 @@ service cloud.firestore {
 
     match /jobs/{jobId} {
       allow read: if true;
-      allow write: if isAdmin() && isValidJob(request.resource.data);
+      allow create: if (isAdmin() || isCompany()) && isValidJob(request.resource.data) && request.resource.data.companyId == request.auth.uid;
+      allow update: if (isAdmin() || (isCompany() && resource.data.companyId == request.auth.uid)) && isValidJob(request.resource.data) && request.resource.data.companyId == resource.data.companyId;
+      allow delete: if isAdmin() || (isCompany() && resource.data.companyId == request.auth.uid);
     }
 
     match /applications/{applicationId} {

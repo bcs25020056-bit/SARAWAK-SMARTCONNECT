@@ -14,11 +14,21 @@
         "badges": { "type": "number" },
         "skills": { "type": "array", "items": { "type": "string" } },
         "education": { "type": "array", "items": { "type": "object" } },
+        "companyInfo": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "industry": { "type": "string" },
+            "website": { "type": "string" },
+            "location": { "type": "string" },
+            "description": { "type": "string" }
+          }
+        },
         "onboarded": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" },
-        "role": { "type": "string" }
+        "role": { "type": "string", "enum": ["student", "company", "admin"] }
       },
-      "required": ["uid", "displayName", "email", "onboarded"]
+      "required": ["uid", "displayName", "email", "onboarded", "role"]
     },
     "Job": {
       "title": "Job",
@@ -27,12 +37,15 @@
       "properties": {
         "title": { "type": "string" },
         "company": { "type": "string" },
+        "companyId": { "type": "string" },
         "location": { "type": "string" },
         "type": { "type": "string" },
         "salary": { "type": "string" },
         "description": { "type": "string" },
-        "postedAt": { "type": "string", "format": "date-time" }
-      }
+        "postedAt": { "type": "string", "format": "date-time" },
+        "icon": { "type": "string" }
+      },
+      "required": ["title", "company", "companyId"]
     },
     "Notification": {
       "title": "Notification",
