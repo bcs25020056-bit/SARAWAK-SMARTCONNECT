@@ -13,7 +13,8 @@ import {
   CheckCircle2, 
   GraduationCap,
   Sparkles,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useFirebase } from '../contexts/FirebaseContext';
@@ -24,15 +25,22 @@ const Profile = () => {
   const [formData, setFormData] = useState({
     displayName: '',
     email: '',
-    bio: ''
+    bio: '',
+    skills: [] as string[],
+    education: [] as any[]
   });
+
+  const [newSkill, setNewSkill] = useState('');
+  const [newEdu, setNewEdu] = useState({ institution: '', degree: '', date: '' });
 
   useEffect(() => {
     if (profile) {
       setFormData({
         displayName: profile.displayName || '',
         email: profile.email || '',
-        bio: profile.bio || ''
+        bio: profile.bio || '',
+        skills: profile.skills || [],
+        education: profile.education || []
       });
     }
   }, [profile]);
@@ -46,36 +54,30 @@ const Profile = () => {
     }
   };
 
-  const skills = [
-    { name: 'UX Design', color: 'bg-primary text-on-primary' },
-    { name: 'Digital Literacy', color: 'bg-tertiary text-on-tertiary' },
-    { name: 'Communication', color: 'bg-secondary-container text-on-secondary-container' },
-    { name: 'Photography', color: 'bg-surface-container-high text-on-surface' },
-    { name: 'Copywriting', color: 'bg-primary-container text-on-primary-container' },
-    { name: 'Public Speaking', color: 'bg-white text-on-surface' },
-  ];
-
-  const education = profile?.education || [
-    {
-      institution: 'Digital Heritage Academy',
-      degree: 'Advanced Cultural Storytelling Module',
-      date: 'Completed: Oct 2023 • Top 5% of Class',
-      status: 'CERTIFIED',
-      statusColor: 'bg-tertiary-container text-on-tertiary-container',
-      icon: BookOpen,
-      iconBg: 'bg-surface-container-low'
-    },
-    {
-      institution: 'Kuching Tech Institute',
-      degree: 'Interaction Design & Community Engagement',
-      date: 'Graduated: 2022 • Honors Degree',
-      status: 'VERIFIED',
-      statusColor: 'bg-white text-secondary inked-border',
-      icon: GraduationCap,
-      iconBg: 'bg-surface-container-low',
-      verified: true
+  const addSkill = () => {
+    if (newSkill && !formData.skills.includes(newSkill)) {
+      setFormData({ ...formData, skills: [...formData.skills, newSkill] });
+      setNewSkill('');
     }
-  ];
+  };
+
+  const removeSkill = (skill: string) => {
+    setFormData({ ...formData, skills: formData.skills.filter(s => s !== skill) });
+  };
+
+  const addEducation = () => {
+    if (newEdu.institution && newEdu.degree) {
+      setFormData({ 
+        ...formData, 
+        education: [...formData.education, { ...newEdu, status: 'VERIFIED', statusColor: 'bg-white text-secondary inked-border' }] 
+      });
+      setNewEdu({ institution: '', degree: '', date: '' });
+    }
+  };
+
+  const removeEducation = (index: number) => {
+    setFormData({ ...formData, education: formData.education.filter((_, i) => i !== index) });
+  };
 
   if (!profile) {
     return (
@@ -194,23 +196,55 @@ const Profile = () => {
                 </div>
                 <h2 className="font-headline font-black text-3xl">Education</h2>
               </div>
-              <button className="flex items-center gap-2 font-headline font-black text-primary hover:translate-x-1 transition-transform">
-                Add New <Plus size={20} />
-              </button>
+            </div>
+
+            {/* Add Education Form */}
+            <div className="bg-surface-container-low rounded-3xl inked-border p-6 mb-8 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input 
+                  type="text" 
+                  placeholder="Institution"
+                  value={newEdu.institution}
+                  onChange={(e) => setNewEdu({ ...newEdu, institution: e.target.value })}
+                  className="bg-white rounded-xl inked-border px-4 py-2 font-bold"
+                />
+                <input 
+                  type="text" 
+                  placeholder="Degree"
+                  value={newEdu.degree}
+                  onChange={(e) => setNewEdu({ ...newEdu, degree: e.target.value })}
+                  className="bg-white rounded-xl inked-border px-4 py-2 font-bold"
+                />
+              </div>
+              <div className="flex gap-4">
+                <input 
+                  type="text" 
+                  placeholder="Year (e.g. 2020 - 2024)"
+                  value={newEdu.date}
+                  onChange={(e) => setNewEdu({ ...newEdu, date: e.target.value })}
+                  className="flex-1 bg-white rounded-xl inked-border px-4 py-2 font-bold"
+                />
+                <button 
+                  onClick={addEducation}
+                  className="bg-primary text-on-primary px-6 py-2 rounded-xl inked-border font-black flex items-center gap-2"
+                >
+                  <Plus size={20} /> Add
+                </button>
+              </div>
             </div>
 
             <div className="flex flex-col gap-6">
-              {education.map((item: any, i: number) => {
-                const Icon = item.icon || GraduationCap;
+              {formData.education.map((item: any, i: number) => {
+                const Icon = GraduationCap;
                 return (
                   <motion.div 
-                    key={item.institution + i}
+                    key={i}
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: i * 0.1 }}
                     className="bg-white rounded-3xl inked-border p-6 inked-shadow flex flex-col md:flex-row items-start md:items-center gap-6"
                   >
-                    <div className={cn("w-16 h-16 rounded-2xl inked-border flex items-center justify-center shrink-0", item.iconBg || 'bg-surface-container-low')}>
+                    <div className="w-16 h-16 rounded-2xl inked-border flex items-center justify-center shrink-0 bg-surface-container-low">
                       <Icon className="text-primary" size={32} />
                     </div>
                     <div className="flex-1">
@@ -223,11 +257,9 @@ const Profile = () => {
                       <p className="font-bold text-on-surface mb-1">{item.degree}</p>
                       <p className="text-sm font-medium text-on-surface-variant">{item.date}</p>
                     </div>
-                    {item.verified && (
-                      <div className="bg-secondary-container p-2 rounded-full inked-border">
-                        <CheckCircle2 size={20} className="text-on-secondary-container" />
-                      </div>
-                    )}
+                    <button onClick={() => removeEducation(i)} className="text-error hover:scale-110 transition-transform">
+                      <X size={20} />
+                    </button>
                   </motion.div>
                 );
               })}
@@ -246,16 +278,34 @@ const Profile = () => {
               <h2 className="font-headline font-black text-3xl">My Skills</h2>
             </div>
 
+            {/* Add Skill Input */}
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                placeholder="Add a skill..."
+                value={newSkill}
+                onChange={(e) => setNewSkill(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addSkill()}
+                className="flex-1 bg-white rounded-xl inked-border px-4 py-2 font-bold focus:border-primary outline-none"
+              />
+              <button 
+                onClick={addSkill}
+                className="bg-primary text-on-primary w-10 h-10 rounded-xl inked-border flex items-center justify-center"
+              >
+                <Plus size={20} />
+              </button>
+            </div>
+
             <div className="flex flex-wrap gap-3">
-              {(profile.skills && profile.skills.length > 0 ? profile.skills.map(s => ({ name: s, color: 'bg-primary text-on-primary' })) : skills).map((skill) => (
+              {formData.skills.map((skill) => (
                 <div 
-                  key={skill.name}
-                  className={cn(
-                    "px-6 py-3 rounded-full font-black text-sm inked-border inked-shadow bubble-press",
-                    skill.color
-                  )}
+                  key={skill}
+                  className="px-6 py-3 rounded-full font-black text-sm inked-border inked-shadow bg-primary text-on-primary flex items-center gap-2"
                 >
-                  {skill.name}
+                  {skill}
+                  <button onClick={() => removeSkill(skill)} className="hover:text-error">
+                    <X size={16} />
+                  </button>
                 </div>
               ))}
             </div>

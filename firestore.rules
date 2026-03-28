@@ -17,6 +17,7 @@ service cloud.firestore {
     //   - badges: number (optional)
     //   - skills: list (optional)
     //   - education: list (optional)
+    //   - onboarded: bool (required)
     //   - createdAt: timestamp (required, immutable)
     //
     // Collection: jobs
@@ -90,10 +91,11 @@ service cloud.firestore {
     // ===============================================================
 
     function isValidUser(data) {
-      return hasRequiredFields(['uid', 'email', 'displayName']) &&
+      return hasRequiredFields(['uid', 'email', 'displayName', 'onboarded']) &&
              data.uid is string && data.uid.size() > 0 &&
              data.email is string && isValidEmail(data.email) &&
              data.displayName is string && data.displayName.size() < 100 &&
+             data.onboarded is bool &&
              (!('bio' in data) || (data.bio is string && data.bio.size() < 1000)) &&
              (!('level' in data) || data.level is number) &&
              (!('xp' in data) || data.xp is number) &&

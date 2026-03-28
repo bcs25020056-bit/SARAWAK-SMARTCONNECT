@@ -9,10 +9,13 @@ import Profile from './pages/Profile';
 import Courses from './pages/Courses';
 import Mentorship from './pages/Mentorship';
 import Achievements from './pages/Achievements';
+import Onboarding from './pages/Onboarding';
 import { FirebaseProvider, useFirebase } from './contexts/FirebaseContext';
+import { useLocation } from 'react-router-dom';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useFirebase();
+  const { user, profile, loading } = useFirebase();
+  const location = useLocation();
   
   if (loading) {
     return (
@@ -25,6 +28,16 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (!user) {
     return <Navigate to="/login" replace />;
   }
+
+  // Redirect to onboarding if not completed
+  if (profile && !profile.onboarded && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  // If already onboarded, don't allow going back to onboarding
+  if (profile && profile.onboarded && location.pathname === '/onboarding') {
+    return <Navigate to="/dashboard" replace />;
+  }
   
   return <>{children}</>;
 };
@@ -35,6 +48,7 @@ export default function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />

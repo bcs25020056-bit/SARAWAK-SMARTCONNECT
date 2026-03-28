@@ -15,6 +15,7 @@ interface UserProfile {
   education?: any[];
   createdAt?: any;
   role?: string;
+  onboarded?: boolean;
 }
 
 interface FirebaseContextType {
@@ -54,7 +55,8 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               skills: [],
               education: [],
               createdAt: serverTimestamp(),
-              role: 'user'
+              role: 'user',
+              onboarded: false
             };
             await setDoc(doc(db, 'users', firebaseUser.uid), initialProfile);
             setProfile(initialProfile);
