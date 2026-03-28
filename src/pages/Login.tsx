@@ -1,15 +1,36 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Rocket, Mail, Lock, Eye, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useFirebase } from '../contexts/FirebaseContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { signIn, user, loading } = useFirebase();
+
+  useEffect(() => {
+    if (user && !loading) {
+      navigate('/dashboard');
+    }
+  }, [user, loading, navigate]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/dashboard');
+    // For now, we'll just use Google Sign-In as the primary method
+    signIn();
   };
+
+  const handleGoogleSignIn = async () => {
+    await signIn();
+  };
+
+  if (loading) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-surface">
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row p-4 md:p-8 gap-8 bg-surface">
@@ -117,10 +138,21 @@ const Login = () => {
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              {['google', 'facebook', 'apple'].map((provider) => (
+              <button 
+                onClick={handleGoogleSignIn}
+                className="flex items-center justify-center p-4 bg-surface-container-low border-4 border-outline rounded-2xl hover:border-primary transition-all active:scale-95"
+              >
+                <img 
+                  src={`https://www.svgrepo.com/show/475656/google-color.svg`} 
+                  alt="google"
+                  className="w-6 h-6"
+                />
+              </button>
+              {['facebook', 'apple'].map((provider) => (
                 <button 
                   key={provider}
-                  className="flex items-center justify-center p-4 bg-surface-container-low border-4 border-outline rounded-2xl hover:border-primary transition-all active:scale-95"
+                  className="flex items-center justify-center p-4 bg-surface-container-low border-4 border-outline rounded-2xl hover:border-primary transition-all active:scale-95 opacity-50 cursor-not-allowed"
+                  disabled
                 >
                   <img 
                     src={`https://www.svgrepo.com/show/475656/${provider}-color.svg`} 

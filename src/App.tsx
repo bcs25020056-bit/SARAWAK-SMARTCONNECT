@@ -1,28 +1,52 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Notifications from './pages/Notifications';
 import JobSearch from './pages/JobSearch';
-
 import Profile from './pages/Profile';
+import Courses from './pages/Courses';
+import Mentorship from './pages/Mentorship';
+import Achievements from './pages/Achievements';
+import { FirebaseProvider, useFirebase } from './contexts/FirebaseContext';
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useFirebase();
+  
+  if (loading) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-surface">
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+};
 
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="notifications" element={<Notifications />} />
-          <Route path="job-search" element={<JobSearch />} />
-          <Route path="courses" element={<div className="p-12 text-center font-headline font-bold text-3xl">Courses Page Coming Soon!</div>} />
-          <Route path="mentorship" element={<div className="p-12 text-center font-headline font-bold text-3xl">Mentorship Page Coming Soon!</div>} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="achievements" element={<div className="p-12 text-center font-headline font-bold text-3xl">Achievements Page Coming Soon!</div>} />
-        </Route>
-      </Routes>
-    </Router>
+    <FirebaseProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="notifications" element={<Notifications />} />
+            <Route path="job-search" element={<JobSearch />} />
+            <Route path="courses" element={<Courses />} />
+            <Route path="mentorship" element={<Mentorship />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="achievements" element={<Achievements />} />
+          </Route>
+        </Routes>
+      </Router>
+    </FirebaseProvider>
   );
 }

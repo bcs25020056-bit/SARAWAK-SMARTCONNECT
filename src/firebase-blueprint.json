@@ -1,0 +1,103 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information and progress",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User's unique ID" },
+        "displayName": { "type": "string", "description": "Full name" },
+        "email": { "type": "string", "format": "email", "description": "User's email" },
+        "bio": { "type": "string", "description": "User's biography" },
+        "level": { "type": "number", "description": "User's explorer level" },
+        "xp": { "type": "number", "description": "User's experience points" },
+        "badges": { "type": "number", "description": "Number of badges earned" },
+        "skills": { 
+          "type": "array", 
+          "items": { "type": "string" },
+          "description": "List of user's skills"
+        },
+        "education": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "institution": { "type": "string" },
+              "degree": { "type": "string" },
+              "date": { "type": "string" },
+              "status": { "type": "string" },
+              "verified": { "type": "boolean" }
+            }
+          },
+          "description": "User's educational background"
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Job": {
+      "title": "Job",
+      "description": "Job posting details",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "company": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "desc": { "type": "string" },
+        "icon": { "type": "string" },
+        "featured": { "type": "boolean" },
+        "internship": { "type": "boolean" },
+        "salary": { "type": "string" },
+        "location": { "type": "string" }
+      },
+      "required": ["title", "company"]
+    },
+    "Application": {
+      "title": "Application",
+      "description": "User's job application status",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "jobId": { "type": "string" },
+        "jobTitle": { "type": "string" },
+        "company": { "type": "string" },
+        "status": { "type": "string" },
+        "progress": { "type": "number" },
+        "appliedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "jobId", "status"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User notifications",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "alert", "success"] },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "message"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents"
+    },
+    "/jobs/{jobId}": {
+      "schema": "Job",
+      "description": "Job postings"
+    },
+    "/applications/{applicationId}": {
+      "schema": "Application",
+      "description": "User job applications"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User notifications"
+    }
+  }
+}

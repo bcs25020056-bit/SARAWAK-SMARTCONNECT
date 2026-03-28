@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   MapPin, 
@@ -12,11 +12,40 @@ import {
   BookOpen, 
   CheckCircle2, 
   GraduationCap,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useFirebase } from '../contexts/FirebaseContext';
 
 const Profile = () => {
+  const { profile, updateProfile } = useFirebase();
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    displayName: '',
+    email: '',
+    bio: ''
+  });
+
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        displayName: profile.displayName || '',
+        email: profile.email || '',
+        bio: profile.bio || ''
+      });
+    }
+  }, [profile]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updateProfile(formData);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const skills = [
     { name: 'UX Design', color: 'bg-primary text-on-primary' },
     { name: 'Digital Literacy', color: 'bg-tertiary text-on-tertiary' },
@@ -26,7 +55,7 @@ const Profile = () => {
     { name: 'Public Speaking', color: 'bg-white text-on-surface' },
   ];
 
-  const education = [
+  const education = profile?.education || [
     {
       institution: 'Digital Heritage Academy',
       degree: 'Advanced Cultural Storytelling Module',
@@ -48,6 +77,14 @@ const Profile = () => {
     }
   ];
 
+  if (!profile) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin text-primary" size={48} />
+      </div>
+    );
+  }
+
   return (
     <div className="pt-8 pb-12 px-6 lg:px-12 max-w-7xl mx-auto flex flex-col gap-10">
       {/* Hero Section */}
@@ -61,8 +98,8 @@ const Profile = () => {
         <div className="relative">
           <div className="w-48 h-48 rounded-full inked-border-heavy overflow-hidden bg-white">
             <img 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuClwilfi_UrxfCZMklMHvED9Qze-ysjMm5tMS4s1bH6yJqvA5dvLkIzm4E0Jnhb5ESnVZ1MIs0Mw9FZdXMbHdvsa_wbAXplcpqOv8oLIt6osM0aXdCu8O-UCMusPxK32_W_12S9E95WkLExKFeAwyXyYuisLGfnwkrbEUfijQt_OHzoiKkhzww-ES6-41z0HqSMkxMVHQM35FXefciOeb1qaEXkVxjQpUfcF2e-mz--BIlD72B_D5PZ_XeoXIfiQSRfuNyGfxLUal3u" 
-              alt="Alex Rivers"
+              src={profile.displayName === 'Alex Rivers' ? "https://lh3.googleusercontent.com/aida-public/AB6AXuClwilfi_UrxfCZMklMHvED9Qze-ysjMm5tMS4s1bH6yJqvA5dvLkIzm4E0Jnhb5ESnVZ1MIs0Mw9FZdXMbHdvsa_wbAXplcpqOv8oLIt6osM0aXdCu8O-UCMusPxK32_W_12S9E95WkLExKFeAwyXyYuisLGfnwkrbEUfijQt_OHzoiKkhzww-ES6-41z0HqSMkxMVHQM35FXefciOeb1qaEXkVxjQpUfcF2e-mz--BIlD72B_D5PZ_XeoXIfiQSRfuNyGfxLUal3u" : `https://ui-avatars.com/api/?name=${profile.displayName}&background=random&size=200`} 
+              alt={profile.displayName}
               className="w-full h-full object-cover"
             />
           </div>
@@ -73,14 +110,14 @@ const Profile = () => {
 
         <div className="flex-1 flex flex-col gap-4 text-center md:text-left">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
-            <h1 className="font-headline font-black text-5xl text-on-surface">Alex Rivers</h1>
+            <h1 className="font-headline font-black text-5xl text-on-surface">{profile.displayName}</h1>
             <div className="inline-flex items-center gap-2 bg-tertiary-container px-4 py-1.5 rounded-full inked-border text-on-tertiary-container font-black text-sm uppercase tracking-wider">
               <Sparkles size={16} />
-              Level 12 Explorer
+              Level {profile.level || 1} Explorer
             </div>
           </div>
           <p className="text-xl font-medium text-on-surface-variant max-w-2xl">
-            A curious traveler documenting the hidden gems of Sarawak. Passionate about digital storytelling and community heritage. 🌏✨
+            {profile.bio || "A curious traveler documenting the hidden gems of Sarawak. Passionate about digital storytelling and community heritage. 🌏✨"}
           </p>
           <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-2">
             <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full inked-border font-bold text-sm">
@@ -89,7 +126,7 @@ const Profile = () => {
             </div>
             <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full inked-border font-bold text-sm">
               <Calendar size={18} className="text-primary" />
-              Joined Jan 2024
+              Joined {profile.createdAt ? new Date(profile.createdAt.seconds * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Jan 2024'}
             </div>
           </div>
         </div>
@@ -112,7 +149,8 @@ const Profile = () => {
                 <label className="font-headline font-black text-xs uppercase tracking-widest text-on-surface-variant">Full Name</label>
                 <input 
                   type="text" 
-                  defaultValue="Alex Rivers"
+                  value={formData.displayName}
+                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
                   className="w-full bg-surface-container-low rounded-xl inked-border px-6 py-4 font-bold focus:border-primary focus:ring-0 transition-all"
                 />
               </div>
@@ -120,8 +158,9 @@ const Profile = () => {
                 <label className="font-headline font-black text-xs uppercase tracking-widest text-on-surface-variant">Email Address</label>
                 <input 
                   type="email" 
-                  defaultValue="alex.rivers@example.com"
-                  className="w-full bg-surface-container-low rounded-xl inked-border px-6 py-4 font-bold focus:border-primary focus:ring-0 transition-all"
+                  value={formData.email}
+                  disabled
+                  className="w-full bg-surface-container-low rounded-xl inked-border px-6 py-4 font-bold opacity-70 cursor-not-allowed"
                 />
               </div>
             </div>
@@ -130,13 +169,19 @@ const Profile = () => {
               <label className="font-headline font-black text-xs uppercase tracking-widest text-on-surface-variant">Bio / About Me</label>
               <textarea 
                 rows={4}
-                defaultValue="I love discovering new places in Sarawak and sharing the stories behind local landmarks. Always looking for the next adventure!"
+                value={formData.bio}
+                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                 className="w-full bg-surface-container-low rounded-2xl inked-border px-6 py-4 font-bold focus:border-primary focus:ring-0 transition-all resize-none"
               />
             </div>
 
-            <button className="w-full bg-primary text-on-primary font-headline font-black text-xl py-5 rounded-2xl inked-border inked-shadow bubble-press">
-              Save Changes
+            <button 
+              onClick={handleSave}
+              disabled={isSaving}
+              className="w-full bg-primary text-on-primary font-headline font-black text-xl py-5 rounded-2xl inked-border inked-shadow bubble-press flex items-center justify-center gap-3 disabled:opacity-70"
+            >
+              {isSaving ? <Loader2 className="animate-spin" /> : null}
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
           </section>
 
@@ -155,34 +200,37 @@ const Profile = () => {
             </div>
 
             <div className="flex flex-col gap-6">
-              {education.map((item, i) => (
-                <motion.div 
-                  key={item.institution}
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="bg-white rounded-3xl inked-border p-6 inked-shadow flex flex-col md:flex-row items-start md:items-center gap-6"
-                >
-                  <div className={cn("w-16 h-16 rounded-2xl inked-border flex items-center justify-center shrink-0", item.iconBg)}>
-                    <item.icon className="text-primary" size={32} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-3 mb-1">
-                      <h4 className="font-headline font-black text-xl">{item.institution}</h4>
-                      <span className={cn("px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest", item.statusColor)}>
-                        {item.status}
-                      </span>
+              {education.map((item: any, i: number) => {
+                const Icon = item.icon || GraduationCap;
+                return (
+                  <motion.div 
+                    key={item.institution + i}
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="bg-white rounded-3xl inked-border p-6 inked-shadow flex flex-col md:flex-row items-start md:items-center gap-6"
+                  >
+                    <div className={cn("w-16 h-16 rounded-2xl inked-border flex items-center justify-center shrink-0", item.iconBg || 'bg-surface-container-low')}>
+                      <Icon className="text-primary" size={32} />
                     </div>
-                    <p className="font-bold text-on-surface mb-1">{item.degree}</p>
-                    <p className="text-sm font-medium text-on-surface-variant">{item.date}</p>
-                  </div>
-                  {item.verified && (
-                    <div className="bg-secondary-container p-2 rounded-full inked-border">
-                      <CheckCircle2 size={20} className="text-on-secondary-container" />
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-3 mb-1">
+                        <h4 className="font-headline font-black text-xl">{item.institution}</h4>
+                        <span className={cn("px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest", item.statusColor || 'bg-tertiary-container text-on-tertiary-container')}>
+                          {item.status}
+                        </span>
+                      </div>
+                      <p className="font-bold text-on-surface mb-1">{item.degree}</p>
+                      <p className="text-sm font-medium text-on-surface-variant">{item.date}</p>
                     </div>
-                  )}
-                </motion.div>
-              ))}
+                    {item.verified && (
+                      <div className="bg-secondary-container p-2 rounded-full inked-border">
+                        <CheckCircle2 size={20} className="text-on-secondary-container" />
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
           </section>
         </div>
@@ -199,7 +247,7 @@ const Profile = () => {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              {skills.map((skill) => (
+              {(profile.skills && profile.skills.length > 0 ? profile.skills.map(s => ({ name: s, color: 'bg-primary text-on-primary' })) : skills).map((skill) => (
                 <div 
                   key={skill.name}
                   className={cn(
@@ -227,12 +275,12 @@ const Profile = () => {
               <div className="flex flex-col gap-3">
                 <div className="flex justify-between font-black text-sm uppercase tracking-widest">
                   <span>Exploration Points</span>
-                  <span className="text-primary">850/1000 XP</span>
+                  <span className="text-primary">{profile.xp || 850}/1000 XP</span>
                 </div>
                 <div className="h-6 bg-surface-container rounded-full inked-border overflow-hidden">
                   <motion.div 
                     initial={{ width: 0 }}
-                    animate={{ width: '85%' }}
+                    animate={{ width: `${((profile.xp || 850) / 1000) * 100}%` }}
                     className="h-full bg-primary-container border-r-4 border-on-primary-container"
                   />
                 </div>
@@ -241,7 +289,7 @@ const Profile = () => {
               <div className="flex flex-col gap-3">
                 <div className="flex justify-between font-black text-sm uppercase tracking-widest">
                   <span>Community Badges</span>
-                  <span className="text-tertiary">14 Earned</span>
+                  <span className="text-tertiary">{profile.badges || 14} Earned</span>
                 </div>
                 <div className="h-6 bg-surface-container rounded-full inked-border overflow-hidden">
                   <motion.div 
