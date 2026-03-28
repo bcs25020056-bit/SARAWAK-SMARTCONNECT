@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #006289;
+  --color-primary-container: #2dbcfe;
+  --color-on-primary: #e8f4ff;
+  --color-on-primary-container: #00344b;
+  
+  --color-secondary: #6c5a00;
+  --color-secondary-container: #ffd709;
+  --color-on-secondary: #fff2cd;
+  --color-on-secondary-container: #5b4b00;
+  
+  --color-tertiary: #006b1b;
+  --color-tertiary-container: #91f78e;
+  --color-on-tertiary: #d1ffc8;
+  --color-on-tertiary-container: #005e17;
+  
+  --color-surface: #f2f7ff;
+  --color-on-surface: #08314d;
+  --color-on-surface-variant: #3d5f7c;
+  --color-surface-container: #d8eaff;
+  --color-surface-container-low: #e8f2ff;
+  --color-surface-container-high: #cde5ff;
+  --color-surface-container-highest: #c2e0ff;
+  
+  --color-outline: #597a99;
+  --color-error: #b31b25;
+
+  --font-headline: "Plus Jakarta Sans", sans-serif;
+  --font-body: "Be Vietnam Pro", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-surface font-body text-on-surface;
+  }
+}
+
+@layer components {
+  .inked-border {
+    @apply border-[3px] border-on-surface;
+  }
+  
+  .inked-border-heavy {
+    @apply border-[5px] border-on-surface;
+  }
+  
+  .inked-shadow {
+    @apply shadow-[4px_4px_0_0_#08314d];
+  }
+
+  .inked-shadow-lg {
+    @apply shadow-[8px_8px_0_0_#08314d];
+  }
+  
+  .pressed-shadow {
+    @apply shadow-[0_6px_0_0_#004d6b] active:shadow-none active:translate-y-[6px] transition-all;
+  }
+  
+  .pressed-shadow-secondary {
+    @apply shadow-[0_6px_0_0_#5b4b00] active:shadow-none active:translate-y-[6px] transition-all;
+  }
+
+  .bubble-press {
+    @apply active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all;
+  }
+}
