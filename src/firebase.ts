@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User as FirebaseUser, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, collection, query, where, onSnapshot, Timestamp, serverTimestamp } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
@@ -11,6 +11,7 @@ export const googleProvider = new GoogleAuthProvider();
 
 // Auth Helpers
 export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
+export { signInWithEmailAndPassword, createUserWithEmailAndPassword };
 export const logout = () => signOut(auth);
 
 // Firestore Error Handler

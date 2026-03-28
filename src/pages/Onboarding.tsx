@@ -68,7 +68,7 @@ const Onboarding = () => {
       }
 
       await updateProfile(updateData);
-      navigate('/dashboard');
+      navigate('/');
     } catch (error) {
       console.error('Onboarding error:', error);
     } finally {

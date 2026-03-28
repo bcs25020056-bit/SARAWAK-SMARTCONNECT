@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { onAuthStateChanged, User as FirebaseUser, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, signInWithGoogle, logout, handleFirestoreError, OperationType } from '../firebase';
 
@@ -30,6 +30,8 @@ interface FirebaseContextType {
   profile: UserProfile | null;
   loading: boolean;
   signIn: () => Promise<void>;
+  signInWithEmail: (email: string, pass: string) => Promise<void>;
+  signUpWithEmail: (email: string, pass: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
 }
@@ -53,7 +55,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             // Create initial profile
             const initialProfile: UserProfile = {
               uid: firebaseUser.uid,
-              displayName: firebaseUser.displayName || 'Explorer',
+              displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Explorer',
               email: firebaseUser.email || '',
               bio: '',
               level: 1,
@@ -65,11 +67,19 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               role: 'student',
               onboarded: false
             };
-            await setDoc(doc(db, 'users', firebaseUser.uid), initialProfile);
-            setProfile(initialProfile);
+            try {
+              await setDoc(doc(db, 'users', firebaseUser.uid), initialProfile);
+              setProfile(initialProfile);
+            } catch (error) {
+              handleFirestoreError(error, OperationType.CREATE, `users/${firebaseUser.uid}`);
+            }
           }
         } catch (error) {
-          console.error('Error fetching profile:', error);
+          if (error instanceof Error && error.message.includes('FirestoreErrorInfo')) {
+            // Already handled
+            throw error;
+          }
+          handleFirestoreError(error, OperationType.GET, `users/${firebaseUser.uid}`);
         }
       } else {
         setProfile(null);
@@ -85,6 +95,25 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await signInWithGoogle();
     } catch (error) {
       console.error('Sign in error:', error);
+      throw error;
+    }
+  };
+
+  const signInWithEmail = async (email: string, pass: string) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch (error) {
+      console.error('Email sign in error:', error);
+      throw error;
+    }
+  };
+
+  const signUpWithEmail = async (email: string, pass: string) => {
+    try {
+      await createUserWithEmailAndPassword(auth, email, pass);
+    } catch (error) {
+      console.error('Email sign up error:', error);
+      throw error;
     }
   };
 
@@ -108,7 +137,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   return (
-    <FirebaseContext.Provider value={{ user, profile, loading, signIn, signOut, updateProfile }}>
+    <FirebaseContext.Provider value={{ user, profile, loading, signIn, signInWithEmail, signUpWithEmail, signOut, updateProfile }}>
       {children}
     </FirebaseContext.Provider>
   );

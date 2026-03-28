@@ -74,8 +74,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && 
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         (request.auth.token.email == "voonvanness288@gmail.com" && request.auth.token.email_verified == true));
+        (request.auth.token.email == "voonvanness288@gmail.com" && request.auth.token.email_verified == true);
     }
 
     function isCompany() {
@@ -100,12 +99,13 @@ service cloud.firestore {
     // ===============================================================
 
     function isValidUser(data) {
-      return hasRequiredFields(['uid', 'email', 'displayName', 'onboarded', 'role']) &&
+      return hasRequiredFields(['uid', 'email', 'displayName', 'onboarded', 'role', 'createdAt']) &&
              data.uid is string && data.uid.size() > 0 &&
              data.email is string && isValidEmail(data.email) &&
              data.displayName is string && data.displayName.size() < 100 &&
              data.onboarded is bool &&
              data.role in ['student', 'company', 'admin'] &&
+             data.createdAt is timestamp &&
              (!('bio' in data) || (data.bio is string && data.bio.size() < 1000)) &&
              (!('level' in data) || data.level is number) &&
              (!('xp' in data) || data.xp is number) &&
@@ -142,11 +142,11 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isOwner(userId) && isValidUser(request.resource.data) && 
-                      (!('role' in request.resource.data) || request.resource.data.role == 'user');
+                      (request.resource.data.role in ['student', 'company']);
       allow update: if isOwner(userId) && isValidUser(request.resource.data) &&
                       request.resource.data.uid == resource.data.uid &&
                       request.resource.data.createdAt == resource.data.createdAt &&
-                      (request.resource.data.role == resource.data.role || isAdmin());
+                      (request.resource.data.role == resource.data.role || !resource.data.onboarded || isAdmin());
     }
 
     match /jobs/{jobId} {
