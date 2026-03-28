@@ -1,16 +1,17 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bell } from 'lucide-react';
+import { Bell, User } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useFirebase } from '../contexts/FirebaseContext';
 
 const TopNav = () => {
   const location = useLocation();
+  const { user } = useFirebase();
   
   const navLinks = [
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Courses', path: '/courses' },
     { name: 'Job Search', path: '/job-search' },
-    { name: 'Profile', path: '/profile' },
   ];
 
   return (
@@ -41,13 +42,21 @@ const TopNav = () => {
           <Link to="/notifications" className="p-2 hover:scale-110 transition-transform text-primary">
             <Bell size={24} />
           </Link>
-          <div className="w-10 h-10 rounded-full border-2 border-primary overflow-hidden cursor-pointer hover:scale-105 transition-transform">
-            <img 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuClwilfi_UrxfCZMklMHvED9Qze-ysjMm5tMS4s1bH6yJqvA5dvLkIzm4E0Jnhb5ESnVZ1MIs0Mw9FZdXMbHdvsa_wbAXplcpqOv8oLIt6osM0aXdCu8O-UCMusPxK32_W_12S9E95WkLExKFeAwyXyYuisLGfnwkrbEUfijQt_OHzoiKkhzww-ES6-41z0HqSMkxMVHQM35FXefciOeb1qaEXkVxjQpUfcF2e-mz--BIlD72B_D5PZ_XeoXIfiQSRfuNyGfxLUal3u" 
-              alt="User Avatar"
-              className="w-full h-full object-cover"
-            />
-          </div>
+          <Link 
+            to="/profile" 
+            className="w-10 h-10 rounded-full border-2 border-primary overflow-hidden cursor-pointer hover:scale-105 transition-transform bg-primary-container flex items-center justify-center"
+          >
+            {user?.photoURL ? (
+              <img 
+                src={user.photoURL} 
+                alt="User Avatar"
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <User className="text-primary" size={20} />
+            )}
+          </Link>
         </div>
       </div>
     </nav>

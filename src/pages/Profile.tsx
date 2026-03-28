@@ -23,7 +23,7 @@ import { cn } from '../lib/utils';
 import { useFirebase } from '../contexts/FirebaseContext';
 
 const Profile = () => {
-  const { profile, updateProfile } = useFirebase();
+  const { user, profile, updateProfile } = useFirebase();
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     displayName: '',
@@ -104,6 +104,15 @@ const Profile = () => {
     );
   }
 
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <div className="pt-8 pb-12 px-6 lg:px-12 max-w-7xl mx-auto flex flex-col gap-10">
       {/* Hero Section */}
@@ -115,12 +124,19 @@ const Profile = () => {
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary-container/20 rounded-full blur-3xl -mr-20 -mt-20" />
         
         <div className="relative">
-          <div className="w-48 h-48 rounded-full inked-border-heavy overflow-hidden bg-white">
-            <img 
-              src={profile.displayName === 'Alex Rivers' ? "https://lh3.googleusercontent.com/aida-public/AB6AXuClwilfi_UrxfCZMklMHvED9Qze-ysjMm5tMS4s1bH6yJqvA5dvLkIzm4E0Jnhb5ESnVZ1MIs0Mw9FZdXMbHdvsa_wbAXplcpqOv8oLIt6osM0aXdCu8O-UCMusPxK32_W_12S9E95WkLExKFeAwyXyYuisLGfnwkrbEUfijQt_OHzoiKkhzww-ES6-41z0HqSMkxMVHQM35FXefciOeb1qaEXkVxjQpUfcF2e-mz--BIlD72B_D5PZ_XeoXIfiQSRfuNyGfxLUal3u" : `https://ui-avatars.com/api/?name=${profile.displayName}&background=random&size=200`} 
-              alt={profile.displayName}
-              className="w-full h-full object-cover"
-            />
+          <div className="w-48 h-48 rounded-full inked-border-heavy overflow-hidden bg-white flex items-center justify-center">
+            {user?.photoURL ? (
+              <img 
+                src={user.photoURL} 
+                alt={profile.displayName}
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="w-full h-full bg-primary-container flex items-center justify-center text-primary text-6xl font-black font-headline">
+                {getInitials(profile.displayName || 'Explorer')}
+              </div>
+            )}
           </div>
           <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-secondary-container rounded-full inked-border flex items-center justify-center inked-shadow">
             <Star className="text-on-secondary-container" size={24} fill="currentColor" />

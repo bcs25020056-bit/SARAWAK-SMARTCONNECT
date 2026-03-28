@@ -6,12 +6,15 @@ import {
   Users, 
   Award, 
   UserCircle,
-  ChevronRight
+  ChevronRight,
+  User
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useFirebase } from '../contexts/FirebaseContext';
 
 const Sidebar = () => {
   const location = useLocation();
+  const { user, profile } = useFirebase();
   
   const navItems = [
     { name: 'Home', icon: LayoutDashboard, path: '/dashboard' },
@@ -26,17 +29,26 @@ const Sidebar = () => {
       {/* User Profile Summary */}
       <div className="flex flex-col items-center gap-4 px-6 mb-4">
         <div className="relative">
-          <div className="w-20 h-20 rounded-full inked-border overflow-hidden bg-white inked-shadow">
-            <img 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuClwilfi_UrxfCZMklMHvED9Qze-ysjMm5tMS4s1bH6yJqvA5dvLkIzm4E0Jnhb5ESnVZ1MIs0Mw9FZdXMbHdvsa_wbAXplcpqOv8oLIt6osM0aXdCu8O-UCMusPxK32_W_12S9E95WkLExKFeAwyXyYuisLGfnwkrbEUfijQt_OHzoiKkhzww-ES6-41z0HqSMkxMVHQM35FXefciOeb1qaEXkVxjQpUfcF2e-mz--BIlD72B_D5PZ_XeoXIfiQSRfuNyGfxLUal3u" 
-              alt="User Avatar"
-              className="w-full h-full object-cover"
-            />
-          </div>
+          <Link to="/profile" className="w-20 h-20 rounded-full inked-border overflow-hidden bg-white inked-shadow flex items-center justify-center hover:scale-105 transition-transform">
+            {user?.photoURL ? (
+              <img 
+                src={user.photoURL} 
+                alt="User Avatar"
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <User className="text-primary" size={40} />
+            )}
+          </Link>
         </div>
         <div className="text-center">
-          <h2 className="text-lg font-black text-primary font-headline leading-tight">Welcome, Explorer!</h2>
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Level 15 Storyteller</p>
+          <h2 className="text-lg font-black text-primary font-headline leading-tight">
+            {profile?.displayName ? `Welcome, ${profile.displayName.split(' ')[0]}!` : 'Welcome, Explorer!'}
+          </h2>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+            {profile?.role === 'company' ? profile.companyInfo?.industry || 'Company' : `Level ${profile?.level || 1} Explorer`}
+          </p>
         </div>
       </div>
       
