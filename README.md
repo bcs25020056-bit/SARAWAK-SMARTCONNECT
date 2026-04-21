@@ -28,6 +28,11 @@
 
 ---
 
+## 📊 Documentation
+- **[Entity Relationship Diagram (ERD)](./ERD.md)**: Detailed breakdown of the data models and relationships.
+
+---
+
 ## 💻 Tech Stack
 
 - **Frontend**: [React 18](https://reactjs.org/) + [Vite](https://vitejs.dev/)
