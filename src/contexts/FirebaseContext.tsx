@@ -3,6 +3,10 @@ import { onAuthStateChanged, User as FirebaseUser, signInWithEmailAndPassword, c
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, signInWithGoogle, logout, handleFirestoreError, OperationType } from '../firebase';
 
+/**
+ * ENCAPSULATION: The UserProfile interface encapsulates all user-related data 
+ * into a single structured type.
+ */
 interface UserProfile {
   uid: string;
   displayName: string;
@@ -25,6 +29,10 @@ interface UserProfile {
   onboarded?: boolean;
 }
 
+/**
+ * ABSTRACTION & POLYMORPHISM: This interface acts as an abstract contract 
+ * for the Firebase services, allowing different implementations if needed.
+ */
 interface FirebaseContextType {
   user: FirebaseUser | null;
   profile: UserProfile | null;
@@ -38,6 +46,11 @@ interface FirebaseContextType {
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
 
+/**
+ * ENCAPSULATION: The FirebaseProvider component encapsulates all the logic 
+ * for Firebase authentication and profile management, hiding the complexity 
+ * from the rest of the application.
+ */
 export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -90,6 +103,9 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => unsubscribe();
   }, []);
 
+  /**
+   * METHOD: A function that performs an action (signing in with Google).
+   */
   const signIn = async () => {
     try {
       await signInWithGoogle();
@@ -125,6 +141,10 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  /**
+   * POLYMORPHISM: This method exhibits polymorphism by accepting any partial 
+   * set of user data, adapting its behavior to update only the provided fields.
+   */
   const updateProfile = async (data: Partial<UserProfile>) => {
     if (!user) return;
     try {

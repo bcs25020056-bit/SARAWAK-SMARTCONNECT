@@ -30,6 +30,10 @@ interface Application {
   appliedAt: any;
 }
 
+/**
+ * ENCAPSULATION: The JobSearch component encapsulates the UI and logic for 
+ * searching and applying to jobs in Sarawak.
+ */
 const JobSearch = () => {
   const { user, profile } = useFirebase();
   const [jobs, setJobs] = useState<Job[]>([]);

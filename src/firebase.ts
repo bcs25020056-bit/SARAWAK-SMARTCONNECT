@@ -15,6 +15,10 @@ export { signInWithEmailAndPassword, createUserWithEmailAndPassword };
 export const logout = () => signOut(auth);
 
 // Firestore Error Handler
+/**
+ * ENCAPSULATION: The OperationType enum encapsulates possible firestore operations 
+ * into a single defined type, preventing invalid values.
+ */
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -24,6 +28,10 @@ export enum OperationType {
   WRITE = 'write',
 }
 
+/**
+ * INHERITANCE / STRUCTURE: This interface defines the structure required for 
+ * error reporting, serving as a base for error objects.
+ */
 export interface FirestoreErrorInfo {
   error: string;
   operationType: OperationType;
@@ -43,6 +51,10 @@ export interface FirestoreErrorInfo {
   }
 }
 
+/**
+ * FUNCTION (PROCEDURE): A reusable logic block that handles firesfore errors 
+ * and formats them for the application.
+ */
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
