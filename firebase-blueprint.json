@@ -59,6 +59,21 @@
         "read": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
       }
+    },
+    "Scholarship": {
+      "title": "Scholarship",
+      "description": "Scholarship details",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "provider": { "type": "string" },
+        "category": { "type": "string" },
+        "amount": { "type": "string" },
+        "eligibility": { "type": "string" },
+        "link": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "provider", "category", "amount", "eligibility", "link"]
     }
   },
   "firestore": {
@@ -73,6 +88,10 @@
     "/notifications/{notificationId}": {
       "schema": "Notification",
       "description": "User notifications collection"
+    },
+    "/scholarships/{scholarshipId}": {
+      "schema": "Scholarship",
+      "description": "Scholarships collection"
     }
   }
 }

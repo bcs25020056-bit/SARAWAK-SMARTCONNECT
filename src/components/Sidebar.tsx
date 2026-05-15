@@ -7,7 +7,10 @@ import {
   Award, 
   UserCircle,
   ChevronRight,
-  User
+  User,
+  ClipboardList,
+  Building2,
+  GraduationCap
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useFirebase } from '../contexts/FirebaseContext';
@@ -16,13 +19,16 @@ const Sidebar = () => {
   const location = useLocation();
   const { user, profile } = useFirebase();
   
-  const navItems = [
-    { name: 'Home', icon: LayoutDashboard, path: '/dashboard' },
-    { name: 'Exploration', icon: Compass, path: '/job-search' },
-    { name: 'Community', icon: Users, path: '/mentorship' },
-    { name: 'Achievements', icon: Award, path: '/achievements' },
-    { name: 'Profile', icon: UserCircle, path: '/profile' },
-  ];
+  const navItems = profile?.role === 'student'
+    ? [
+        { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+        { name: 'Scholarships', icon: GraduationCap, path: '/scholarships' },
+        { name: 'Job Search', icon: Compass, path: '/job-search' },
+      ]
+    : [
+        { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+        { name: 'Pending Approval', icon: Building2, path: '/companies' },
+      ];
 
   return (
     <aside className="hidden lg:flex flex-col py-8 px-4 gap-6 h-[calc(100vh-6rem)] sticky top-24 w-72 rounded-r-[3rem] border-r-[5px] border-slate-900/10 bg-slate-50">

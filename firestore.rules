@@ -74,7 +74,8 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && 
-        (request.auth.token.email == "voonvanness288@gmail.com" && request.auth.token.email_verified == true);
+        (request.auth.token.email.lower() == "voonvanness288@gmail.com" || 
+         request.auth.token.email.lower() == "admin@smartconnect.sarawak");
     }
 
     function isCompany() {
@@ -135,6 +136,16 @@ service cloud.firestore {
              data.read is bool;
     }
 
+    function isValidScholarship(data) {
+      return hasRequiredFields(['title', 'provider', 'category', 'amount', 'eligibility', 'link']) &&
+             data.title is string && data.title.size() < 200 &&
+             data.provider is string && data.provider.size() < 200 &&
+             data.category is string &&
+             data.amount is string &&
+             data.eligibility is string &&
+             data.link is string;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -142,11 +153,12 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isOwner(userId) && isValidUser(request.resource.data) && 
-                      (request.resource.data.role in ['student', 'company']);
-      allow update: if isOwner(userId) && isValidUser(request.resource.data) &&
+                      (request.resource.data.role in ['student', 'company'] || (request.resource.data.role == 'admin' && request.auth.token.email == "admin@smartconnect.sarawak"));
+      allow update: if (isOwner(userId) || isAdmin()) && isValidUser(request.resource.data) &&
                       request.resource.data.uid == resource.data.uid &&
                       request.resource.data.createdAt == resource.data.createdAt &&
                       (request.resource.data.role == resource.data.role || !resource.data.onboarded || isAdmin());
+      allow delete: if isAdmin();
     }
 
     match /jobs/{jobId} {
@@ -171,6 +183,13 @@ service cloud.firestore {
       allow update: if isAuthenticated() && isOwner(resource.data.userId) && 
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    match /scholarships/{scholarshipId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidScholarship(request.resource.data);
+      allow update: if isAdmin() && isValidScholarship(request.resource.data);
+      allow delete: if isAdmin();
     }
 
     // Default deny

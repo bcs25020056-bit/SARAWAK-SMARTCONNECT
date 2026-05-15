@@ -1,23 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Terminal, CircleDollarSign, Brain, Megaphone, Star, Rocket, Palette, BarChart3, ChevronLeft, ChevronRight, Plus, Loader2, Building2, Briefcase, Landmark, GraduationCap, Award, Users } from 'lucide-react';
+import { Terminal, CircleDollarSign, Brain, Star, Rocket, Palette, BarChart3, ChevronLeft, ChevronRight, Plus, Loader2, Building2, Briefcase, Landmark, GraduationCap, Award, Users, ClipboardList } from 'lucide-react';
 import { collection, query, limit, onSnapshot, orderBy, where, deleteDoc, doc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useFirebase } from '../contexts/FirebaseContext';
 import { cn } from '../lib/utils';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import JobModal from '../components/JobModal';
 
 const Dashboard = () => {
   const { user, profile, loading: authLoading } = useFirebase();
+  const navigate = useNavigate();
   const [recommendedJobs, setRecommendedJobs] = useState<any[]>([]);
-  const [recentAlerts, setRecentAlerts] = useState<any[]>([]);
+  const [recentApps, setRecentApps] = useState<any[]>([]);
+  const [stats, setStats] = useState({ users: 0, apps: 0 });
+  const [scholarships, setScholarships] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isJobModalOpen, setIsJobModalOpen] = useState(false);
   const [jobToEdit, setJobToEdit] = useState<any>(null);
 
   useEffect(() => {
     if (!user || !profile) return;
+
+    if (profile.role === 'admin') {
+      // Fetch stats
+      const unsubscribeUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+        setStats(prev => ({ ...prev, users: snapshot.size }));
+      });
+      const unsubscribeApps = onSnapshot(collection(db, 'applications'), (snapshot) => {
+        setStats(prev => ({ ...prev, apps: snapshot.size }));
+        setRecentApps(snapshot.docs.slice(0, 3).map(doc => ({ id: doc.id, ...doc.data() })));
+      });
+      const unsubscribeScholarships = onSnapshot(query(collection(db, 'scholarships'), limit(3)), (snapshot) => {
+        setScholarships(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      });
+      setLoading(false);
+      return () => {
+        unsubscribeUsers();
+        unsubscribeApps();
+        unsubscribeScholarships();
+      };
+    }
 
     // Fetch jobs
     let jobsQuery;
@@ -33,38 +56,28 @@ const Dashboard = () => {
       jobsQuery = query(collection(db, 'jobs'), limit(5));
     }
 
-    const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
-      setRecommendedJobs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'jobs');
+    // Fetch scholarships for students
+    const unsubscribeScholarships = onSnapshot(query(collection(db, 'scholarships'), limit(3)), (snapshot) => {
+      setScholarships(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    // Fetch recent notifications as alerts
-    const alertsQuery = query(
-      collection(db, 'notifications'),
-      where('userId', '==', user.uid),
-      orderBy('createdAt', 'desc'),
-      limit(3)
-    );
-    const unsubscribeAlerts = onSnapshot(alertsQuery, (snapshot) => {
-      setRecentAlerts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
+      setRecommendedJobs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'notifications');
+      handleFirestoreError(error, OperationType.LIST, 'jobs');
       setLoading(false);
     });
 
     return () => {
       unsubscribeJobs();
-      unsubscribeAlerts();
+      unsubscribeScholarships();
     };
-  }, [user]);
+  }, [user, profile]);
 
-  const scholarships = [
-    { title: 'PTPTN Loan', icon: Landmark, color: 'bg-primary-container', applicants: 1240, desc: 'National higher education fund for Malaysian students.' },
-    { title: 'Yayasan Sarawak', icon: GraduationCap, color: 'bg-secondary-container', applicants: 850, desc: 'Special scholarships and loans for Sarawakian students.' },
-    { title: 'Petronas Scholarship', icon: Award, color: 'bg-tertiary-container', applicants: 3200, desc: 'Full scholarship for high-achieving students in STEM fields.' },
-  ];
+  const handleApply = (link: string) => {
+    window.open(link, '_blank', 'noopener,noreferrer');
+  };
 
   const handleDeleteJob = async (e: React.MouseEvent, jobId: string) => {
     e.stopPropagation();
@@ -97,6 +110,101 @@ const Dashboard = () => {
 
   const xpProgress = profile ? (profile.xp % 1000) / 10 : 0;
   const xpToNext = profile ? 1000 - (profile.xp % 1000) : 1000;
+
+  if (profile?.role === 'admin') {
+    return (
+      <div className="flex-1 px-4 lg:px-12 pb-20 overflow-x-hidden">
+        {/* Admin Hero */}
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16 mt-8">
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="lg:col-span-2 bg-primary text-on-primary p-10 rounded-3xl inked-border relative overflow-hidden flex flex-col justify-center"
+          >
+            <div className="relative z-10">
+              <h1 className="text-5xl font-black font-headline mb-4">Admin Console 🛠️</h1>
+              <p className="text-xl font-medium opacity-90 max-w-md">Welcome back to the command center. You have total control over the Sarawak Smart Connect ecosystem.</p>
+            </div>
+            <Star className="absolute right-8 top-8 text-8xl opacity-20 rotate-12" />
+          </motion.div>
+
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="bg-surface-container-highest p-8 rounded-3xl inked-border flex flex-col justify-between"
+          >
+            <div>
+              <h3 className="font-headline font-extrabold text-2xl mb-2 text-primary">System Health</h3>
+              <p className="text-on-surface-variant font-semibold">Active Session: {user?.email}</p>
+            </div>
+            <div className="mt-6 flex items-center gap-4 text-center">
+              <div className="flex-1 bg-white p-4 rounded-2xl inked-border">
+                <p className="text-3xl font-black text-primary font-headline">{stats.users}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Users</p>
+              </div>
+              <div className="flex-1 bg-white p-4 rounded-2xl inked-border">
+                <p className="text-3xl font-black text-primary font-headline">{stats.apps}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Applications</p>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Admin Actions */}
+        <section className="mb-16">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-4xl font-black font-headline text-on-surface">Recent Applications</h2>
+            <div className="flex gap-4">
+               <Link to="/applications?type=Scholarship" className="px-6 py-3 bg-secondary text-on-secondary font-black rounded-full inked-border inked-shadow flex items-center gap-2 hover:scale-105 transition-transform text-sm">
+                  Scholarships
+               </Link>
+               <Link to="/applications?type=Job" className="px-6 py-3 bg-tertiary text-on-tertiary font-black rounded-full inked-border inked-shadow flex items-center gap-2 hover:scale-105 transition-transform text-sm">
+                  Jobs
+               </Link>
+               <Link to="/applications" className="px-6 py-3 bg-primary text-on-primary font-black rounded-full inked-border inked-shadow flex items-center gap-2 hover:scale-105 transition-transform text-sm">
+                  All Applications
+               </Link>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            {recentApps.length === 0 ? (
+              <div className="col-span-full py-12 bg-white rounded-3xl inked-border border-2 border-dashed flex flex-col items-center justify-center text-center opacity-50">
+                <ClipboardList size={48} className="mb-4" />
+                <h3 className="font-headline font-extrabold text-xl">No applications yet</h3>
+              </div>
+            ) : (
+              recentApps.map((app, i) => (
+                <motion.div 
+                  key={app.id}
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.1 * i }}
+                  className="bg-white rounded-3xl inked-border p-8 hover:-translate-y-2 transition-transform cursor-pointer group"
+                  onClick={() => navigate('/applications')}
+                >
+                  <div className="w-16 h-16 bg-primary-container rounded-2xl inked-border mb-6 flex items-center justify-center">
+                    {app.type === 'Scholarship' ? <GraduationCap size={32} className="text-primary" /> : <Briefcase size={32} className="text-primary" />}
+                  </div>
+                  <h3 className="font-headline font-extrabold text-2xl mb-1 truncate">{app.candidateName || 'New Applicant'}</h3>
+                  <p className="text-on-surface-variant mb-4 font-bold">{app.type} Application</p>
+                  <div className="flex items-center justify-between">
+                    <span className="px-3 py-1 bg-surface text-on-surface text-[10px] font-black rounded-full uppercase tracking-widest">
+                      {app.status}
+                    </span>
+                    <span className="text-sm font-bold text-slate-400">
+                      {app.appliedAt ? new Date(app.appliedAt.seconds * 1000).toLocaleDateString() : 'Just now'}
+                    </span>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   if (profile?.role === 'company') {
     return (
@@ -210,7 +318,7 @@ const Dashboard = () => {
         >
           <div className="relative z-10">
             <h1 className="text-5xl font-black font-headline mb-4">Welcome Back, {profile?.displayName?.split(' ')[0] || 'Explorer'}! 👋</h1>
-            <p className="text-xl font-medium opacity-90 max-w-md">You're doing amazing! You've already completed {profile?.badges?.length || 0} milestones. Keep that momentum going!</p>
+            <p className="text-xl font-medium opacity-90 max-w-md">Your education is your passport to the future. Keep up the great work with your studies and reach for the stars!</p>
           </div>
           <div className="absolute -right-4 -bottom-4 w-48 h-48 bg-primary-container/20 rounded-full blur-3xl" />
           <Star className="absolute right-8 top-8 text-8xl opacity-20 rotate-12" fill="currentColor" />
@@ -243,29 +351,38 @@ const Dashboard = () => {
         </motion.div>
       </section>
 
-      {/* Scholarships Section */}
+      {/* Recommended Scholarships Section */}
       <section className="mb-16">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-4xl font-black font-headline text-on-surface">Available Scholarships</h2>
+          <h2 className="text-4xl font-black font-headline text-on-surface">Recommended Scholarships</h2>
           <Link to="/scholarships" className="px-6 py-2 bg-white text-primary font-bold rounded-full inked-border hover:bg-surface-container transition-colors">View All</Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {scholarships.map((scholarship, i) => (
             <motion.div 
-              key={scholarship.title}
+              key={scholarship.id}
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.1 * i }}
-              className="bg-white rounded-3xl inked-border p-8 hover:-translate-y-2 transition-transform cursor-pointer group"
+              onClick={() => handleApply(scholarship.link)}
+              className="group bg-white rounded-3xl inked-border p-8 hover:-translate-y-2 transition-all cursor-pointer overflow-hidden relative"
             >
-              <div className={cn("w-20 h-20 rounded-2xl inked-border mb-6 flex items-center justify-center group-hover:rotate-6 transition-transform", scholarship.color)}>
-                <scholarship.icon size={40} className="text-on-surface" />
+              <div className="flex justify-between items-start mb-6 relative z-10">
+                <div className={cn("w-20 h-20 rounded-2xl inked-border flex items-center justify-center text-3xl group-hover:rotate-6 transition-transform", scholarship.color)}>
+                  <GraduationCap size={40} className="text-primary" />
+                </div>
+                <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                  {scholarship.category}
+                </div>
               </div>
-              <h3 className="font-headline font-extrabold text-2xl mb-3">{scholarship.title}</h3>
-              <p className="text-on-surface-variant mb-6 font-medium">{scholarship.desc}</p>
-              <div className="flex items-center gap-2">
-                <Users size={16} className="text-slate-400" />
-                <span className="text-xs font-bold text-slate-400">{scholarship.applicants} applicants</span>
+              <h3 className="font-headline font-extrabold text-2xl mb-1 relative z-10 group-hover:text-primary transition-colors">{scholarship.title}</h3>
+              <p className="text-on-surface-variant font-bold mb-4 relative z-10 text-sm">{scholarship.provider}</p>
+              <div className="flex items-center justify-between relative z-10">
+                <div className="flex items-center gap-2">
+                  <CircleDollarSign size={16} className="text-secondary" />
+                  <span className="text-sm font-black text-secondary">{scholarship.amount}</span>
+                </div>
+                <ChevronRight className="text-slate-300 group-hover:text-primary group-hover:translate-x-1 transition-all" />
               </div>
             </motion.div>
           ))}
@@ -273,37 +390,9 @@ const Dashboard = () => {
       </section>
 
       {/* Bottom Grid */}
-      <section className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        {/* Alerts */}
-        <div className="lg:col-span-2 bg-surface-container-low p-8 rounded-3xl inked-border">
-          <div className="flex items-center gap-3 mb-8">
-            <Megaphone className="text-error" size={32} />
-            <h2 className="text-2xl font-black font-headline">Recent Alerts</h2>
-          </div>
-          <div className="space-y-6">
-            {recentAlerts.length === 0 ? (
-              <p className="text-on-surface-variant font-medium text-center py-8">No recent alerts.</p>
-            ) : (
-              recentAlerts.map((alert, i) => (
-                <div key={i} className={cn(
-                  "bg-white p-6 rounded-2xl inked-border border-l-[12px] flex gap-4",
-                  alert.type === 'alert' ? 'border-secondary' : alert.type === 'success' ? 'border-tertiary' : 'border-primary'
-                )}>
-                  <div className="flex-1">
-                    <p className="font-bold text-lg mb-1">{alert.title}</p>
-                    <p className="text-sm text-on-surface-variant line-clamp-2">{alert.message}</p>
-                  </div>
-                  <span className="text-xs font-bold text-slate-400">
-                    {alert.createdAt ? new Date(alert.createdAt.seconds * 1000).toLocaleDateString() : 'Now'}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
+      <section>
         {/* Jobs */}
-        <div className="lg:col-span-3 bg-white p-8 rounded-3xl inked-border overflow-hidden">
+        <div className="bg-white p-8 rounded-3xl inked-border overflow-hidden">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <Rocket className="text-primary" size={32} />

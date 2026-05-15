@@ -6,6 +6,8 @@ import { db, handleFirestoreError, OperationType } from '../firebase';
 import { useFirebase } from '../contexts/FirebaseContext';
 import { cn } from '../lib/utils';
 
+import { useLocation } from 'react-router-dom';
+
 interface Job {
   id: string;
   title: string;
@@ -36,14 +38,25 @@ interface Application {
  */
 const JobSearch = () => {
   const { user, profile } = useFirebase();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialSearch = queryParams.get('q') || '';
+
   const [jobs, setJobs] = useState<Job[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [applyingId, setApplyingId] = useState<string | null>(null);
 
   const categories = ['All', 'Tech', 'Design', 'Marketing', 'Admin', 'Tourism'];
   const [selectedCategory, setSelectedCategory] = useState('All');
+
+  useEffect(() => {
+    const q = queryParams.get('q');
+    if (q) {
+      setSearchTerm(q);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     const jobsCol = collection(db, 'jobs');
@@ -95,10 +108,12 @@ const JobSearch = () => {
     try {
       await addDoc(collection(db, 'applications'), {
         userId: user.uid,
+        candidateName: profile.name || user.email?.split('@')[0] || 'User',
         jobId: job.id,
         jobTitle: job.title,
         company: job.company,
-        status: 'Review',
+        type: 'Job',
+        status: 'pending',
         progress: 15,
         appliedAt: serverTimestamp()
       });

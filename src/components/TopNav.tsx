@@ -6,13 +6,24 @@ import { useFirebase } from '../contexts/FirebaseContext';
 
 const TopNav = () => {
   const location = useLocation();
-  const { user } = useFirebase();
+  const { user, profile } = useFirebase();
   
-  const navLinks = [
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Scholarships', path: '/scholarships' },
-    { name: 'Job Search', path: '/job-search' },
-  ];
+  const navLinks = profile?.role === 'student'
+    ? [
+        { name: 'Dashboard', path: '/dashboard' },
+        { name: 'Scholarships', path: '/scholarships' },
+        { name: 'Job Search', path: '/job-search' },
+      ]
+    : profile?.role === 'admin'
+    ? [
+        { name: 'Dashboard', path: '/dashboard' },
+        { name: 'Admin Management', path: '/admin' },
+        { name: 'Job Search', path: '/job-search' },
+      ]
+    : [
+        { name: 'Dashboard', path: '/dashboard' },
+        { name: 'Manage Jobs', path: '/dashboard' },
+      ];
 
   return (
     <nav className="fixed top-0 w-full z-50 px-6 py-4 bg-white/80 backdrop-blur-xl border-b-[3px] border-slate-200 shadow-[0_4px_0_0_rgba(0,0,0,0.05)]">

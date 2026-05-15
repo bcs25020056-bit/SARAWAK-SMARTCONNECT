@@ -5,9 +5,6 @@ import {
   Calendar, 
   Award, 
   Star, 
-  Trophy, 
-  Camera, 
-  MessageSquare, 
   Plus, 
   BookOpen, 
   CheckCircle2, 
@@ -479,85 +476,8 @@ const Profile = () => {
                   </p>
                 </div>
               </section>
-
-              {/* Progress Section */}
-              <section className="bg-white rounded-[2.5rem] inked-border p-10 inked-shadow flex flex-col gap-8">
-                <h2 className="font-headline font-black text-3xl">Adventure Progress</h2>
-                
-                <div className="flex flex-col gap-6">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex justify-between font-black text-sm uppercase tracking-widest">
-                      <span>Exploration Points</span>
-                      <span className="text-primary">{profile.xp || 850}/1000 XP</span>
-                    </div>
-                    <div className="h-6 bg-surface-container rounded-full inked-border overflow-hidden">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${((profile.xp || 850) / 1000) * 100}%` }}
-                        className="h-full bg-primary-container border-r-4 border-on-primary-container"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-3">
-                    <div className="flex justify-between font-black text-sm uppercase tracking-widest">
-                      <span>Community Badges</span>
-                      <span className="text-tertiary">{profile.badges || 14} Earned</span>
-                    </div>
-                    <div className="h-6 bg-surface-container rounded-full inked-border overflow-hidden">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: '60%' }}
-                        className="h-full bg-tertiary-container border-r-4 border-on-tertiary-container"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4 pt-4 border-t-2 border-dashed border-outline/20">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-12 h-12 bg-primary-container rounded-2xl inked-border flex items-center justify-center">
-                      <Trophy size={24} className="text-primary" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase text-center">12 Trophies</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-12 h-12 bg-tertiary-container rounded-2xl inked-border flex items-center justify-center">
-                      <Camera size={24} className="text-tertiary" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase text-center">42 Photos</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-12 h-12 bg-secondary-container rounded-2xl inked-border flex items-center justify-center">
-                      <MessageSquare size={24} className="text-on-secondary-container" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase text-center">156 Posts</span>
-                  </div>
-                </div>
-              </section>
             </>
           )}
-
-          {/* CTA Banner */}
-          <section className="relative rounded-[2.5rem] inked-border overflow-hidden inked-shadow h-64 group">
-            <img 
-              src="https://images.unsplash.com/photo-1542332213-31f87348057f?auto=format&fit=crop&q=80&w=1000" 
-              alt="Sarawak Jungle"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-on-surface/80 to-transparent" />
-            <div className="absolute inset-0 p-8 flex flex-col justify-end gap-4">
-              <h3 className="font-headline font-black text-2xl text-white leading-tight">
-                {profile.role === 'company' ? 'Find Your Next Talent' : 'Join the Next Expedition'}
-              </h3>
-              <p className="text-white/80 text-sm font-bold">
-                {profile.role === 'company' ? 'Post a job and connect with Sarawak\'s best students.' : 'New quests available in Bako National Park!'}
-              </p>
-              <button className="bg-white text-on-surface font-headline font-black px-6 py-3 rounded-xl inked-border bubble-press self-start">
-                {profile.role === 'company' ? 'Post Job' : 'Learn More'}
-              </button>
-            </div>
-          </section>
         </div>
       </div>
     </div>

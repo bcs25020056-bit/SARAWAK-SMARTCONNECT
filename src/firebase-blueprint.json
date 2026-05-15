@@ -54,18 +54,20 @@
     },
     "Application": {
       "title": "Application",
-      "description": "User's job application status",
+      "description": "User's job or scholarship application status",
       "type": "object",
       "properties": {
         "userId": { "type": "string" },
         "jobId": { "type": "string" },
+        "type": { "type": "string", "enum": ["Job", "Scholarship"] },
         "jobTitle": { "type": "string" },
+        "candidateName": { "type": "string" },
         "company": { "type": "string" },
         "status": { "type": "string" },
         "progress": { "type": "number" },
         "appliedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["userId", "jobId", "status"]
+      "required": ["userId", "jobId", "type", "status"]
     },
     "Notification": {
       "title": "Notification",

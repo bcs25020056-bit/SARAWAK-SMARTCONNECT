@@ -29,40 +29,45 @@ const Notifications = () => {
       orderBy('createdAt', 'desc')
     );
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      if (snapshot.empty) {
-        // Seed initial notifications if empty
-        const initialNotifs = [
-          {
-            userId: user.uid,
-            title: 'New Course Material',
-            message: 'Professor Ling just uploaded "Introduction to Data Structures: Module 4" to your learning portal. Grab your digital notebook!',
-            type: 'info',
-            read: false,
-            createdAt: serverTimestamp()
-          },
-          {
-            userId: user.uid,
-            title: 'Internship Invitation',
-            message: "Petronas Sarawak has invited you for a screening interview for the 'Engineering Associate' internship program. Congratulations!",
-            type: 'alert',
-            read: false,
-            createdAt: serverTimestamp()
-          },
-          {
-            userId: user.uid,
-            title: 'Welcome to Smart Connect!',
-            message: 'Your journey to empower Sarawak starts here. Explore jobs, scholarships, and more!',
-            type: 'success',
-            read: false,
-            createdAt: serverTimestamp()
-          }
-        ];
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (snapshot.empty && !loading) {
+        // Seed initial notifications ONLY if we are sure it's actually empty and not just loading
+        const seedInitial = async () => {
+          const initialNotifs = [
+            {
+              userId: user.uid,
+              title: 'New Course Material',
+              message: 'Professor Ling just uploaded "Introduction to Data Structures: Module 4" to your learning portal. Grab your digital notebook!',
+              type: 'info',
+              read: false,
+              createdAt: serverTimestamp()
+            },
+            {
+              userId: user.uid,
+              title: 'Internship Invitation',
+              message: "Petronas Sarawak has invited you for a screening interview for the 'Engineering Associate' internship program. Congratulations!",
+              type: 'alert',
+              read: false,
+              createdAt: serverTimestamp()
+            },
+            {
+              userId: user.uid,
+              title: 'Welcome to Smart Connect!',
+              message: 'Your journey to empower Sarawak starts here. Explore jobs, scholarships, and more!',
+              type: 'success',
+              read: false,
+              createdAt: serverTimestamp()
+            }
+          ];
 
-        const notifsCol = collection(db, 'notifications');
-        for (const notif of initialNotifs) {
-          await addDoc(notifsCol, notif);
-        }
+          const notifsCol = collection(db, 'notifications');
+          // Use a batch or at least don't let snapshot trigger re-render in a confusing way
+          // Actually, adding them will naturally trigger the snapshot else block
+          for (const notif of initialNotifs) {
+            await addDoc(notifsCol, notif);
+          }
+        };
+        seedInitial();
       } else {
         setNotifications(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification)));
       }
@@ -164,7 +169,7 @@ const Notifications = () => {
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: i * 0.1 }}
                   className={cn(
-                    "bg-surface-container-highest rounded-3xl p-8 border-[4px] border-on-surface hover:translate-y-[-4px] transition-transform duration-200 relative",
+                    "bg-surface-container-highest rounded-3xl p-8 border-[4px] border-on-surface relative",
                     !notif.read && "border-primary"
                   )}
                 >
@@ -215,39 +220,6 @@ const Notifications = () => {
         </div>
       )}
 
-      {/* Summary Sidebar (Visual only for layout consistency) */}
-      <div className="mt-20 grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-white rounded-3xl p-6 border-[4px] border-on-surface shadow-[12px_12px_0_0_#d8eaff]">
-          <div className="w-full h-32 bg-primary-container rounded-2xl overflow-hidden border-[3px] border-on-surface mb-6">
-            <img 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3SkT46sJogBjLBP_N-jkROPYalmecUCFWW84uK1ots5nWOOL1HTT9afclKDZ2m3RBbO9PdB1WKk1er4WTv_VzEfrdCPAd3OCVUnZYZ_-X__bjcd9OaVGDWzpMhAo07VdXEYQQf1BaWRowZ1xhw0cxLoaAsRHmmmp3Yl5ix2Jv-ol2Lq5PZRED-fVKREXwaCv1yiqxG6R6EC8ES8cYNN-x3WcSR2WlBO8xZlZrXDM8S6LijH_d4fvZ8PuSSGs1mt_D3TMh5msgeYDg" 
-              alt="Summary"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <h4 className="font-headline font-black text-xl mb-3">Today's Summary</h4>
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-primary" />
-              <p className="text-sm font-semibold text-on-surface-variant">{notifications.filter(n => n.type === 'info').length} Academic Updates</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-secondary" />
-              <p className="text-sm font-semibold text-on-surface-variant">{notifications.filter(n => n.type === 'alert').length} Career Opportunities</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-secondary-container rounded-3xl p-6 border-[4px] border-on-surface flex flex-col items-center text-center">
-          <CheckCircle2 className="text-on-secondary-container mb-4" size={48} />
-          <h4 className="font-headline font-black text-xl text-on-secondary-container mb-2">Clean Slate!</h4>
-          <p className="text-on-secondary-container font-medium text-sm mb-6">Stay on top of your journey. Keeping notifications clean helps you focus!</p>
-          <div className="w-full h-2 bg-on-secondary-container/20 rounded-full overflow-hidden">
-            <div className="w-[75%] h-full bg-on-secondary-container rounded-full" />
-          </div>
-          <p className="text-[10px] font-black uppercase tracking-tighter text-on-secondary-container mt-2">75% Efficiency Score</p>
-        </div>
-      </div>
     </div>
   );
 };

@@ -42,6 +42,7 @@ interface FirebaseContextType {
   signUpWithEmail: (email: string, pass: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
+  adminUpdateProfile: (targetUid: string, data: Partial<UserProfile>) => Promise<void>;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
@@ -63,7 +64,15 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         try {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           if (userDoc.exists()) {
-            setProfile(userDoc.data() as UserProfile);
+            const data = userDoc.data() as UserProfile;
+            // Force admin role for prioritized emails if they aren't already admin
+            if ((firebaseUser.email === 'voonvanness288@gmail.com' || firebaseUser.email === 'admin@smartconnect.sarawak') && data.role !== 'admin') {
+              const updatedProfile = { ...data, role: 'admin' as const, onboarded: true };
+              await setDoc(doc(db, 'users', firebaseUser.uid), updatedProfile, { merge: true });
+              setProfile(updatedProfile);
+            } else {
+              setProfile(data);
+            }
           } else {
             // Create initial profile
             const initialProfile: UserProfile = {
@@ -77,8 +86,8 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               skills: [],
               education: [],
               createdAt: serverTimestamp(),
-              role: 'student',
-              onboarded: false
+              role: (firebaseUser.email === 'admin@smartconnect.sarawak' || firebaseUser.email === 'voonvanness288@gmail.com') ? 'admin' : 'student',
+              onboarded: (firebaseUser.email === 'admin@smartconnect.sarawak' || firebaseUser.email === 'voonvanness288@gmail.com') ? true : false
             };
             try {
               await setDoc(doc(db, 'users', firebaseUser.uid), initialProfile);
@@ -156,8 +165,20 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const adminUpdateProfile = async (targetUid: string, data: any) => {
+    if (profile?.role !== 'admin') {
+      throw new Error('Unauthorized: Admin only');
+    }
+    try {
+      const userRef = doc(db, 'users', targetUid);
+      await setDoc(userRef, data, { merge: true });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `users/${targetUid}`);
+    }
+  };
+
   return (
-    <FirebaseContext.Provider value={{ user, profile, loading, signIn, signInWithEmail, signUpWithEmail, signOut, updateProfile }}>
+    <FirebaseContext.Provider value={{ user, profile, loading, signIn, signInWithEmail, signUpWithEmail, signOut, updateProfile, adminUpdateProfile }}>
       {children}
     </FirebaseContext.Provider>
   );

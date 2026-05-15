@@ -7,14 +7,17 @@ import Dashboard from './pages/Dashboard';
 import Notifications from './pages/Notifications';
 import JobSearch from './pages/JobSearch';
 import Profile from './pages/Profile';
+import RegisteredJobs from './pages/RegisteredJobs';
 import Scholarships from './pages/Scholarships';
 import Mentorship from './pages/Mentorship';
 import Achievements from './pages/Achievements';
 import Onboarding from './pages/Onboarding';
+import Applications from './pages/Applications';
+import AdminManagement from './pages/AdminManagement';
 import { FirebaseProvider, useFirebase } from './contexts/FirebaseContext';
 import { useLocation } from 'react-router-dom';
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
   const { user, profile, loading } = useFirebase();
   const location = useLocation();
   
@@ -33,6 +36,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   // Redirect to onboarding if not completed
   if (profile && !profile.onboarded && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
+  }
+
+  // Role based protection
+  if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   // If already onboarded, don't allow going back to onboarding
@@ -55,11 +63,14 @@ export default function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="notifications" element={<Notifications />} />
-            <Route path="job-search" element={<JobSearch />} />
-            <Route path="scholarships" element={<Scholarships />} />
-            <Route path="mentorship" element={<Mentorship />} />
+            <Route path="job-search" element={<ProtectedRoute allowedRoles={['student']}><JobSearch /></ProtectedRoute>} />
+            <Route path="scholarships" element={<ProtectedRoute allowedRoles={['student']}><Scholarships /></ProtectedRoute>} />
+            <Route path="companies" element={<ProtectedRoute allowedRoles={['student', 'admin', 'company']}><RegisteredJobs /></ProtectedRoute>} />
+            <Route path="mentorship" element={<ProtectedRoute allowedRoles={['student']}><Mentorship /></ProtectedRoute>} />
             <Route path="profile" element={<Profile />} />
-            <Route path="achievements" element={<Achievements />} />
+            <Route path="achievements" element={<ProtectedRoute allowedRoles={['student']}><Achievements /></ProtectedRoute>} />
+            <Route path="applications" element={<Applications />} />
+            <Route path="admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminManagement /></ProtectedRoute>} />
           </Route>
         </Routes>
       </Router>
