@@ -15,7 +15,8 @@ import {
   Building2,
   Globe,
   Briefcase,
-  LogOut
+  LogOut,
+  Phone
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useFirebase } from '../contexts/FirebaseContext';
@@ -29,6 +30,7 @@ const Profile = () => {
   const [formData, setFormData] = useState({
     displayName: '',
     email: '',
+    phoneNumber: '',
     bio: '',
     skills: [] as string[],
     education: [] as any[],
@@ -49,6 +51,7 @@ const Profile = () => {
       setFormData({
         displayName: profile.displayName || '',
         email: profile.email || '',
+        phoneNumber: profile.phoneNumber || '',
         bio: profile.bio || '',
         skills: profile.skills || [],
         education: profile.education || [],
@@ -158,11 +161,11 @@ const Profile = () => {
             <h1 className="font-headline font-black text-5xl text-on-surface">{profile.role === 'company' ? formData.companyInfo.name : profile.displayName}</h1>
             <div className="inline-flex items-center gap-2 bg-tertiary-container px-4 py-1.5 rounded-full inked-border text-on-tertiary-container font-black text-sm uppercase tracking-wider">
               <Sparkles size={16} />
-              {profile.role === 'company' ? 'Verified Employer' : `Level ${profile.level || 1} Explorer`}
+              {profile.role === 'company' ? 'Verified Employer' : profile.role === 'admin' ? 'Platform Administrator' : `Level ${profile.level || 1} Explorer`}
             </div>
           </div>
           <p className="text-xl font-medium text-on-surface-variant max-w-2xl">
-            {profile.role === 'company' ? formData.companyInfo.description : (profile.bio || "A curious traveler documenting the hidden gems of Sarawak. Passionate about digital storytelling and community heritage. 🌏✨")}
+            {profile.role === 'company' ? formData.companyInfo.description : (profile.bio || (profile.role === 'admin' ? "System Administrator for Sarawak Smart Connect platform." : "A curious traveler documenting the hidden gems of Sarawak. Passionate about digital storytelling and community heritage. 🌏✨"))}
           </p>
           <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-2">
             <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full inked-border font-bold text-sm">
@@ -263,6 +266,38 @@ const Profile = () => {
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
             </section>
+          ) : profile.role === 'admin' ? (
+            <section className="bg-white rounded-[2.5rem] inked-border p-10 inked-shadow border-4 border-primary/20">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 bg-primary-container rounded-full inked-border flex items-center justify-center">
+                  <CheckCircle2 className="text-primary" size={24} />
+                </div>
+                <h2 className="font-headline font-black text-3xl text-on-surface">Administrative Privileges</h2>
+              </div>
+              <div className="flex flex-col gap-6">
+                <p className="text-xl font-bold text-on-surface-variant leading-relaxed">
+                  You are identified as a Platform Administrator. Your account is exempted from traditional student profiles. 
+                  Manage users, scholarships, and system settings via the Admin Portal.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-6 bg-surface-container rounded-2xl inked-border">
+                    <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant mb-2">Authenticated As</p>
+                    <p className="text-lg font-black text-primary">{profile.email}</p>
+                  </div>
+                  <div className="p-6 bg-surface-container rounded-2xl inked-border">
+                    <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant mb-2">Access Level</p>
+                    <p className="text-lg font-black text-secondary uppercase tracking-tighter italic">Full Root Access</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => navigate('/admin')}
+                  className="w-full bg-primary text-on-primary font-headline font-black text-2xl py-6 rounded-3xl inked-border inked-shadow-lg bubble-press flex items-center justify-center gap-4 group mt-4"
+                >
+                  Go to Management Portal
+                  <Plus className="group-hover:rotate-90 transition-transform" />
+                </button>
+              </div>
+            </section>
           ) : (
             <>
               {/* Personal Info Form */}
@@ -292,6 +327,22 @@ const Profile = () => {
                       disabled
                       className="w-full bg-surface-container-low rounded-xl inked-border px-6 py-4 font-bold opacity-70 cursor-not-allowed"
                     />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-8 mb-8">
+                  <div className="flex flex-col gap-2">
+                    <label className="font-headline font-black text-xs uppercase tracking-widest text-on-surface-variant">Phone Number</label>
+                    <div className="relative">
+                      <Phone className="absolute left-6 top-1/2 -translate-y-1/2 text-on-surface-variant/50" size={20} />
+                      <input 
+                        type="tel" 
+                        placeholder="e.g. +60 12-345 6789"
+                        value={formData.phoneNumber}
+                        onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                        className="w-full bg-surface-container-low rounded-xl inked-border pl-16 pr-6 py-4 font-bold focus:border-primary focus:ring-0 transition-all"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -426,6 +477,25 @@ const Profile = () => {
                 </p>
               </div>
             </section>
+          ) : profile.role === 'admin' ? (
+            <section className="bg-surface-container-high rounded-[2.5rem] inked-border p-10 inked-shadow flex flex-col gap-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-secondary-container rounded-full inked-border flex items-center justify-center">
+                  <Globe className="text-on-secondary-container" size={24} />
+                </div>
+                <h2 className="font-headline font-black text-3xl">Platform</h2>
+              </div>
+              <div className="p-6 bg-white rounded-3xl inked-border inked-shadow">
+                 <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">System Health</p>
+                 <div className="flex items-center gap-2">
+                   <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                   <p className="text-xl font-black text-green-600">All Systems Operational</p>
+                 </div>
+              </div>
+              <p className="text-[10px] text-center font-black uppercase tracking-widest text-on-surface-variant/50">
+                AI Studio Sarawak Build • 2026
+              </p>
+            </section>
           ) : (
             <>
               {/* Skills Section */}
@@ -471,9 +541,9 @@ const Profile = () => {
                 </div>
 
                 <div className="mt-4 p-6 bg-white/50 rounded-3xl border-2 border-dashed border-on-surface/20 text-center">
-                  <p className="text-sm font-bold text-on-surface-variant leading-relaxed">
-                    New skills unlock as you level up your Exploration rank!
-                  </p>
+                   <p className="text-sm font-bold text-on-surface-variant leading-relaxed">
+                     New skills unlock as you level up your Exploration rank!
+                   </p>
                 </div>
               </section>
             </>

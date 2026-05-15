@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { GraduationCap, Sparkles, ArrowRight, Plus, X, CheckCircle2, Loader2, User, Briefcase, Building2, Globe, MapPin } from 'lucide-react';
+import { GraduationCap, Sparkles, ArrowRight, Plus, X, CheckCircle2, Loader2, User, Briefcase, Building2, Globe, MapPin, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFirebase } from '../contexts/FirebaseContext';
 import { cn } from '../lib/utils';
@@ -13,6 +13,7 @@ const Onboarding = () => {
 
   // Role
   const [role, setRole] = useState<'student' | 'company' | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState('');
 
   // Step 1: Education (Student) / Company Info (Company)
   const [education, setEducation] = useState<any[]>([]);
@@ -63,6 +64,7 @@ const Onboarding = () => {
       if (role === 'student') {
         updateData.education = education;
         updateData.skills = skills;
+        updateData.phoneNumber = phoneNumber;
       } else {
         updateData.companyInfo = companyInfo;
       }
@@ -141,6 +143,20 @@ const Onboarding = () => {
       className="bg-white rounded-[2.5rem] inked-border p-8 inked-shadow"
     >
       <div className="space-y-6 mb-8">
+        <div className="space-y-2">
+          <label className="text-xs font-black uppercase tracking-widest text-on-surface-variant ml-2">Phone Number</label>
+          <div className="relative">
+            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" size={20} />
+            <input 
+              type="tel" 
+              placeholder="e.g. +60 12-345 6789"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="w-full bg-surface-container-low rounded-xl inked-border pl-12 pr-4 py-3 font-bold focus:border-primary focus:ring-0 outline-none"
+            />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-widest text-on-surface-variant ml-2">Institution</label>

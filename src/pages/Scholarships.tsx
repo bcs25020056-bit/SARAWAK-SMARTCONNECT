@@ -3,13 +3,17 @@ import { motion, AnimatePresence } from 'motion/react';
 import { GraduationCap, ExternalLink, Users, Search, Landmark, MessageSquareX, CircleDollarSign, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { db } from '../firebase';
-import { collection, onSnapshot, query, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, query, addDoc, serverTimestamp } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../firebase';
+import { useFirebase } from '../contexts/FirebaseContext';
 
 const Scholarships = () => {
+  const { user, profile } = useFirebase();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [scholarships, setScholarships] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [applyingId, setApplyingId] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, 'scholarships'));
@@ -24,8 +28,42 @@ const Scholarships = () => {
 
   const categories = ['All', 'Government', 'Private', 'University', 'International'];
 
-  const handleApply = (link: string) => {
-    window.open(link, '_blank', 'noopener,noreferrer');
+  const handleApply = async (scholarship: any) => {
+    // Open link
+    window.open(scholarship.link, '_blank', 'noopener,noreferrer');
+
+    // Also record tracking if logged in
+    if (!user) return;
+    
+    setApplyingId(scholarship.id);
+    try {
+      await addDoc(collection(db, 'applications'), {
+        userId: user.uid,
+        candidateName: profile?.displayName || user.email?.split('@')[0] || 'User',
+        jobId: scholarship.id,
+        jobTitle: scholarship.title,
+        company: scholarship.provider,
+        companyId: 'admin', // Scholarships belong to admin review or system
+        type: 'Scholarship',
+        status: 'pending',
+        progress: 15,
+        appliedAt: serverTimestamp()
+      });
+
+      // Add a notification
+      await addDoc(collection(db, 'notifications'), {
+        userId: user.uid,
+        title: 'Scholarship Application Tracked!',
+        message: `We've noted your interest in ${scholarship.title}. Your application status is now being tracked.`,
+        type: 'info',
+        read: false,
+        createdAt: serverTimestamp()
+      });
+    } catch (error) {
+       handleFirestoreError(error, OperationType.CREATE, 'applications');
+    } finally {
+      setApplyingId(null);
+    }
   };
 
   const filteredScholarships = scholarships.filter(s => {
@@ -126,10 +164,11 @@ const Scholarships = () => {
 
                     <div className="mt-auto">
                       <button 
-                        onClick={() => handleApply(scholarship.link)}
+                        onClick={() => handleApply(scholarship)}
+                        disabled={applyingId === scholarship.id}
                         className="w-full py-4 bg-primary text-on-primary rounded-2xl font-headline font-black inked-border pressed-shadow hover:scale-[1.02] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
                       >
-                        Apply Now <ExternalLink size={18} />
+                        {applyingId === scholarship.id ? <Loader2 className="animate-spin" size={18} /> : 'Apply Now'} <ExternalLink size={18} />
                       </button>
                     </div>
                   </div>

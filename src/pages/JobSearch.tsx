@@ -12,6 +12,7 @@ interface Job {
   id: string;
   title: string;
   company: string;
+  companyId: string;
   tags?: string[];
   description: string;
   icon: string;
@@ -112,6 +113,7 @@ const JobSearch = () => {
         jobId: job.id,
         jobTitle: job.title,
         company: job.company,
+        companyId: job.companyId || '', // SAVE COMPANY ID
         type: 'Job',
         status: 'pending',
         progress: 15,

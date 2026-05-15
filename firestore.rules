@@ -11,6 +11,7 @@ service cloud.firestore {
     //   - uid: string (required, immutable)
     //   - displayName: string (required)
     //   - email: string (required, email format)
+    //   - phoneNumber: string (optional)
     //   - bio: string (optional)
     //   - level: number (optional)
     //   - xp: number (optional)
@@ -75,7 +76,8 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() && 
         (request.auth.token.email.lower() == "voonvanness288@gmail.com" || 
-         request.auth.token.email.lower() == "admin@smartconnect.sarawak");
+         request.auth.token.email.lower() == "admin@smartconnect.sarawak" ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
 
     function isCompany() {
@@ -107,6 +109,7 @@ service cloud.firestore {
              data.onboarded is bool &&
              data.role in ['student', 'company', 'admin'] &&
              data.createdAt is timestamp &&
+             (!('phoneNumber' in data) || (data.phoneNumber is string && data.phoneNumber.size() < 20)) &&
              (!('bio' in data) || (data.bio is string && data.bio.size() < 1000)) &&
              (!('level' in data) || data.level is number) &&
              (!('xp' in data) || data.xp is number) &&
@@ -124,16 +127,19 @@ service cloud.firestore {
     }
 
     function isValidApplication(data) {
-      return hasRequiredFields(['userId', 'jobId', 'status', 'progress']) &&
-             data.userId is string && data.jobId is string &&
-             data.status is string && data.progress is number;
+      return data.userId is string && data.jobId is string &&
+             data.status is string && data.progress is number &&
+             data.companyId is string &&
+             (!('appliedAt' in data) || data.appliedAt is timestamp) &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 
     function isValidNotification(data) {
       return hasRequiredFields(['userId', 'title', 'message', 'type', 'read']) &&
              data.userId is string && data.title is string &&
              data.message is string && data.type in ['info', 'alert', 'success'] &&
-             data.read is bool;
+             data.read is bool &&
+             (!('createdAt' in data) || data.createdAt is timestamp);
     }
 
     function isValidScholarship(data) {
@@ -169,17 +175,25 @@ service cloud.firestore {
     }
 
     match /applications/{applicationId} {
-      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.companyId == request.auth.uid || 
+        isAdmin()
+      );
       allow create: if isAuthenticated() && isOwner(request.resource.data.userId) && isValidApplication(request.resource.data);
-      allow update: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin()) && isValidApplication(request.resource.data) &&
-                      request.resource.data.userId == resource.data.userId &&
-                      request.resource.data.jobId == resource.data.jobId;
+      allow update: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.companyId == request.auth.uid || 
+        isAdmin()
+      ) && isValidApplication(request.resource.data) &&
+      request.resource.data.userId == resource.data.userId &&
+      request.resource.data.jobId == resource.data.jobId;
       allow delete: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
     }
 
     match /notifications/{notificationId} {
       allow read: if isAuthenticated() && isOwner(resource.data.userId);
-      allow create: if isAdmin() && isValidNotification(request.resource.data);
+      allow create: if (isAdmin() || (isCompany() && request.resource.data.type in ['info', 'alert', 'success'])) && isValidNotification(request.resource.data);
       allow update: if isAuthenticated() && isOwner(resource.data.userId) && 
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);

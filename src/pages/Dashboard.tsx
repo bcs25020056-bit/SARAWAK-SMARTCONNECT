@@ -61,6 +61,29 @@ const Dashboard = () => {
       setScholarships(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
+    // Fetch apps
+    const appsQuery = profile.role === 'company'
+      ? query(collection(db, 'applications'), where('companyId', '==', user.uid), limit(3))
+      : query(collection(db, 'applications'), where('userId', '==', user.uid), limit(3));
+    
+    const unsubscribeApps = onSnapshot(appsQuery, (snapshot) => {
+      setRecentApps(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      if (profile.role === 'company') {
+        setStats(prev => ({ ...prev, apps: snapshot.size })); // This only gets size of limited query, better to have a separate count or just use the snapshot if no limit
+      }
+    });
+
+    // Actually, for stats we might want the total count
+    const totalAppsQuery = profile.role === 'company'
+      ? query(collection(db, 'applications'), where('companyId', '==', user.uid))
+      : query(collection(db, 'applications'), where('userId', '==', user.uid));
+    
+    const unsubscribeTotalApps = onSnapshot(totalAppsQuery, (snapshot) => {
+      setStats(prev => ({ ...prev, apps: snapshot.size }));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'applications');
+    });
+
     const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
       setRecommendedJobs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
@@ -72,6 +95,8 @@ const Dashboard = () => {
     return () => {
       unsubscribeJobs();
       unsubscribeScholarships();
+      unsubscribeApps();
+      unsubscribeTotalApps();
     };
   }, [user, profile]);
 
@@ -239,7 +264,7 @@ const Dashboard = () => {
                 <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Active Jobs</p>
               </div>
               <div className="flex-1 bg-white p-4 rounded-2xl inked-border text-center">
-                <p className="text-3xl font-black text-secondary font-headline">0</p>
+                <p className="text-3xl font-black text-secondary font-headline">{stats.apps}</p>
                 <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Applications</p>
               </div>
             </div>
@@ -290,7 +315,9 @@ const Dashboard = () => {
                     <span className="px-3 py-1 bg-secondary-container/30 text-secondary text-xs font-black rounded-full uppercase">
                       {job.type || 'Full Time'}
                     </span>
-                    <span className="text-sm font-bold text-on-surface-variant">0 Applicants</span>
+                    <span className="text-sm font-bold text-on-surface-variant">
+                      {recentApps.filter(app => app.jobId === job.id).length} Applicants
+                    </span>
                   </div>
                 </motion.div>
               ))

@@ -8,6 +8,7 @@
         "uid": { "type": "string" },
         "displayName": { "type": "string" },
         "email": { "type": "string" },
+        "phoneNumber": { "type": "string" },
         "bio": { "type": "string" },
         "level": { "type": "number" },
         "xp": { "type": "number" },
@@ -74,6 +75,25 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["title", "provider", "category", "amount", "eligibility", "link"]
+    },
+    "Application": {
+      "title": "Application",
+      "description": "Job or scholarship application",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "candidateName": { "type": "string" },
+        "jobId": { "type": "string" },
+        "jobTitle": { "type": "string" },
+        "company": { "type": "string" },
+        "companyId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "progress": { "type": "number" },
+        "appliedAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "type": { "type": "string", "enum": ["Job", "Scholarship"] }
+      },
+      "required": ["userId", "jobId", "status", "progress", "companyId"]
     }
   },
   "firestore": {
@@ -92,6 +112,10 @@
     "/scholarships/{scholarshipId}": {
       "schema": "Scholarship",
       "description": "Scholarships collection"
+    },
+    "/applications/{applicationId}": {
+      "schema": "Application",
+      "description": "Applications collection (Jobs and Scholarships)"
     }
   }
 }

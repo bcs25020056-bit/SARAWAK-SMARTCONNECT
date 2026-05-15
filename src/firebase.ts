@@ -165,3 +165,25 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   console.error('Firestore Error: ', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
 }
+
+// Connection check logic as per integration guidelines
+import { getDocFromServer } from 'firebase/firestore';
+
+async function testConnection() {
+  try {
+    // Testing connection to a dummy path to verify connectivity
+    await getDocFromServer(doc(db, 'test', 'connection'));
+    console.log("Firestore connection verified.");
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('unavailable')) {
+      console.warn("Firestore is currently unavailable. This may be a temporary network issue.");
+    } else if (error instanceof Error && error.message.includes('offline')) {
+      console.error("Please check your Firebase configuration or internet connection.");
+    }
+  }
+}
+
+// Only run test in development/preview to avoid unnecessary overhead in prod if not needed
+if (process.env.NODE_ENV !== 'production') {
+  testConnection();
+}

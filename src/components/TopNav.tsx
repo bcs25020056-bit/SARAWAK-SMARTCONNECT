@@ -22,7 +22,7 @@ const TopNav = () => {
       ]
     : [
         { name: 'Dashboard', path: '/dashboard' },
-        { name: 'Manage Jobs', path: '/dashboard' },
+        { name: 'Manage Jobs', path: '/companies' },
       ];
 
   return (
